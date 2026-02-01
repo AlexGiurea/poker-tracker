@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import Board from './components/Board'
+import ChatbotWidget from './components/ChatbotWidget'
 import PlayerProfilePage from './components/PlayerProfilePage'
 import ProfilesBoard from './components/ProfilesBoard'
 import StatsBoard from './components/StatsBoard'
@@ -240,6 +241,15 @@ const App = () => {
   return (
     <div className="app">
       <header className="app-header">
+        {activePage === 'profile' ? (
+          <button
+            type="button"
+            className="app-back"
+            onClick={() => setActivePage('profiles')}
+          >
+            Back to profiles
+          </button>
+        ) : null}
         <p className="eyebrow">Poker Session Dashboard</p>
         <h1>Poker Tracker</h1>
         <div className="page-tabs">
@@ -283,7 +293,6 @@ const App = () => {
         <PlayerProfilePage
           sessions={normalizedData.sessions}
           playerName={selectedPlayerName}
-          onBack={() => setActivePage('profiles')}
         />
       ) : session ? (
         <>
@@ -370,6 +379,7 @@ const App = () => {
       ) : (
         <p className="empty-state">No session data available.</p>
       )}
+      <ChatbotWidget />
     </div>
   )
 }

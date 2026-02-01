@@ -3,7 +3,6 @@ import type { Session } from '../types/poker'
 type PlayerProfilePageProps = {
   sessions: Session[]
   playerName: string
-  onBack: () => void
 }
 
 type PlayerProfile = {
@@ -84,7 +83,6 @@ const buildProfile = (sessions: Session[], name: string) => {
 const PlayerProfilePage = ({
   sessions,
   playerName,
-  onBack,
 }: PlayerProfilePageProps) => {
   const result = buildProfile(sessions, playerName)
 
@@ -92,9 +90,6 @@ const PlayerProfilePage = ({
     return (
       <div className="profile-page">
         <div className="profile-page-header">
-          <button type="button" className="profile-back" onClick={onBack}>
-            Back to profiles
-          </button>
           <h2>Profile not found</h2>
           <p className="subtitle">Select a player to view their stats.</p>
         </div>
@@ -107,9 +102,6 @@ const PlayerProfilePage = ({
   return (
     <div className="profile-page">
       <div className="profile-page-header">
-        <button type="button" className="profile-back" onClick={onBack}>
-          Back to profiles
-        </button>
         <div className="profile-hero">
           <div className="profile-identity">
             <div className="profile-avatar" aria-hidden="true">
