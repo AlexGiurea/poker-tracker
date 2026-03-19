@@ -44,7 +44,15 @@ const loadSessions = (): ChatSession[] => {
     if (!Array.isArray(parsed) || parsed.length === 0) {
       return [buildNewSession()]
     }
-    return parsed
+    const previousSessions = parsed.filter(
+      (session) =>
+        !(
+          session.title === 'New chat' &&
+          session.messages.length === 1 &&
+          session.messages[0]?.id === welcomeMessage.id
+        ),
+    )
+    return [buildNewSession(), ...previousSessions]
   } catch {
     return [buildNewSession()]
   }
@@ -53,16 +61,25 @@ const loadSessions = (): ChatSession[] => {
 const readJsonSafely = async (response: Response) => {
   const text = await response.text()
   if (!text.trim()) {
-    return null
+    return {
+      rawText: text,
+      json: null,
+    }
   }
 
   try {
-    return JSON.parse(text) as {
-      outputText?: string
-      error?: string
+    return {
+      rawText: text,
+      json: JSON.parse(text) as {
+        outputText?: string
+        error?: string
+      },
     }
   } catch {
-    return null
+    return {
+      rawText: text,
+      json: null,
+    }
   }
 }
 
@@ -173,11 +190,17 @@ const ChatbotWidget = () => {
       const payload = await readJsonSafely(response)
 
       if (!response.ok) {
-        const message = payload?.error ?? `Request failed (${response.status})`
+        const message =
+          payload.json?.error ??
+          payload.rawText.trim() ??
+          `Request failed (${response.status})`
         throw new Error(message)
       }
 
-      const outputText = payload?.outputText ?? 'No response received.'
+      const outputText =
+        payload.json?.outputText ??
+        payload.rawText.trim() ??
+        'No response received.'
 
       appendMessage({
         id: `assistant-${Date.now()}`,
