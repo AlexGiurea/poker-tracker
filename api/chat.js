@@ -25,6 +25,32 @@ const readCsvContext = () => {
   return fs.readFileSync(csvPath, 'utf8')
 }
 
+const readRequestBody = async (req) => {
+  if (typeof req.body === 'string') {
+    return req.body
+  }
+
+  if (req.body && typeof req.body === 'object') {
+    return req.body
+  }
+
+  const chunks = []
+  for await (const chunk of req) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+
+  const raw = Buffer.concat(chunks).toString('utf8')
+  if (!raw.trim()) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return raw
+  }
+}
+
 const json = (res, statusCode, body) => {
   res.statusCode = statusCode
   res.setHeader('Content-Type', 'application/json')
@@ -166,10 +192,7 @@ export default async function handler(req, res) {
     })
   }
 
-  const body =
-    typeof req.body === 'string'
-      ? JSON.parse(req.body)
-      : req.body ?? {}
+  const body = await readRequestBody(req)
 
   const messages = sanitizeMessages(body.messages)
   const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user')
