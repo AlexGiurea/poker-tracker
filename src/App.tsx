@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Board from './components/Board'
 import ChatbotWidget from './components/ChatbotWidget'
@@ -142,6 +142,28 @@ const App = () => {
     `Day ${getNextDayNumber(normalizedData.sessions)}`,
   )
 
+  // Mouse-tracking tilt: sets --tilt-x / --tilt-y CSS vars on :root
+  const rafRef = useRef<number | null>(null)
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (rafRef.current) return
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null
+        const cx = window.innerWidth / 2
+        const cy = window.innerHeight / 2
+        const rx = ((e.clientY - cy) / cy) * 5
+        const ry = ((cx - e.clientX) / cx) * 5
+        document.documentElement.style.setProperty('--tilt-x', `${rx.toFixed(2)}deg`)
+        document.documentElement.style.setProperty('--tilt-y', `${ry.toFixed(2)}deg`)
+      })
+    }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
+
   useEffect(() => {
     if (
       !normalizedData.sessions.find(
@@ -260,9 +282,11 @@ const App = () => {
 
   return (
     <div className="app-shell">
+      <div className="depth-grid" />
       <div className="ambient ambient-a" />
       <div className="ambient ambient-b" />
       <div className="ambient ambient-c" />
+      <div className="ambient ambient-d" />
 
       {appView === 'landing' ? (
         <LandingPage
