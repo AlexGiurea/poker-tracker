@@ -7,6 +7,7 @@ const MAX_MESSAGES = 10
 const MAX_MESSAGE_CHARS = 500
 const MAX_TOTAL_CHARS = 3000
 const MAX_OUTPUT_TOKENS = 320
+const RETRY_MAX_OUTPUT_TOKENS = 640
 const MODEL_FALLBACK = 'gpt-5.4-mini'
 const REASONING_EFFORT = 'low'
 
@@ -185,6 +186,34 @@ const logDebug = (scope, details) => {
   )
 }
 
+const requestChatCompletion = async ({
+  apiKey,
+  model,
+  csvContext,
+  messages,
+  maxOutputTokens,
+}) => {
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      reasoning: {
+        effort: REASONING_EFFORT,
+      },
+      instructions: `${SYSTEM_PROMPT}\n\nCSV data (header + rows):\n${csvContext}`,
+      input: messages,
+      max_output_tokens: maxOutputTokens,
+    }),
+  })
+
+  const payload = await readJsonSafely(response)
+  return { response, payload }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return json(res, 405, { error: 'Method not allowed.' })
@@ -223,24 +252,13 @@ export default async function handler(req, res) {
   try {
     const csvContext = readCsvContext()
     const model = process.env.OPENAI_MODEL ?? MODEL_FALLBACK
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        reasoning: {
-          effort: REASONING_EFFORT,
-        },
-        instructions: `${SYSTEM_PROMPT}\n\nCSV data (header + rows):\n${csvContext}`,
-        input: messages,
-        max_output_tokens: MAX_OUTPUT_TOKENS,
-      }),
+    let { response, payload } = await requestChatCompletion({
+      apiKey,
+      model,
+      csvContext,
+      messages,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
     })
-
-    const payload = await readJsonSafely(response)
     if (!response.ok) {
       const upstreamMessage =
         payload.json?.error?.message ??
@@ -258,7 +276,43 @@ export default async function handler(req, res) {
       })
     }
 
-    const outputText = extractResponseText(payload.json)
+    let outputText = extractResponseText(payload.json)
+    if (!outputText && isMaxTokenIncomplete(payload.json)) {
+      logDebug('retrying-after-max-tokens', {
+        model,
+        initialMaxOutputTokens: MAX_OUTPUT_TOKENS,
+        retryMaxOutputTokens: RETRY_MAX_OUTPUT_TOKENS,
+      })
+
+      ;({ response, payload } = await requestChatCompletion({
+        apiKey,
+        model,
+        csvContext,
+        messages,
+        maxOutputTokens: RETRY_MAX_OUTPUT_TOKENS,
+      }))
+
+      if (!response.ok) {
+        const upstreamMessage =
+          payload.json?.error?.message ??
+          payload.text?.trim() ??
+          'Chat request failed.'
+        logDebug('openai-error', {
+          status: response.status,
+          statusText: response.statusText,
+          model,
+          messageCount: messages.length,
+          upstreamMessage,
+          retry: true,
+        })
+        return json(res, response.status, {
+          error: `OpenAI request failed (${response.status} ${response.statusText}): ${upstreamMessage}`,
+        })
+      }
+
+      outputText = extractResponseText(payload.json)
+    }
+
     if (!outputText) {
       logDebug('empty-output', {
         status: response.status,
