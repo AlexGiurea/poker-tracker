@@ -277,11 +277,12 @@ export default async function handler(req, res) {
     }
 
     let outputText = extractResponseText(payload.json)
-    if (!outputText && isMaxTokenIncomplete(payload.json)) {
+    if (isMaxTokenIncomplete(payload.json)) {
       logDebug('retrying-after-max-tokens', {
         model,
         initialMaxOutputTokens: MAX_OUTPUT_TOKENS,
         retryMaxOutputTokens: RETRY_MAX_OUTPUT_TOKENS,
+        hadPartialOutput: Boolean(outputText),
       })
 
       ;({ response, payload } = await requestChatCompletion({
@@ -310,7 +311,10 @@ export default async function handler(req, res) {
         })
       }
 
-      outputText = extractResponseText(payload.json)
+      const retriedOutputText = extractResponseText(payload.json)
+      if (retriedOutputText) {
+        outputText = retriedOutputText
+      }
     }
 
     if (!outputText) {
