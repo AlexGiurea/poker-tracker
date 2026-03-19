@@ -8,6 +8,7 @@ const MAX_MESSAGE_CHARS = 500
 const MAX_TOTAL_CHARS = 3000
 const MAX_OUTPUT_TOKENS = 140
 const MODEL_FALLBACK = 'gpt-5.4-mini'
+const REASONING_EFFORT = 'low'
 
 const SYSTEM_PROMPT = `You are the Poker Tracker chatbot.
 Answer questions about sessions, players, and statistics from the CSV data included below.
@@ -160,14 +161,24 @@ const extractResponseText = (payload) => {
 const readJsonSafely = async (response) => {
   const text = await response.text()
   if (!text.trim()) {
-    return null
+    return { text, json: null }
   }
 
   try {
-    return JSON.parse(text)
+    return { text, json: JSON.parse(text) }
   } catch {
-    return null
+    return { text, json: null }
   }
+}
+
+const logDebug = (scope, details) => {
+  console.error(
+    `[chat:${scope}]`,
+    JSON.stringify({
+      timestamp: new Date().toISOString(),
+      ...details,
+    }),
+  )
 }
 
 export default async function handler(req, res) {
@@ -181,6 +192,10 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
+    logDebug('config', {
+      error: 'Missing server OpenAI API key.',
+      hasModel: Boolean(process.env.OPENAI_MODEL ?? MODEL_FALLBACK),
+    })
     return json(res, 500, { error: 'Missing server OpenAI API key.' })
   }
 
@@ -203,6 +218,7 @@ export default async function handler(req, res) {
 
   try {
     const csvContext = readCsvContext()
+    const model = process.env.OPENAI_MODEL ?? MODEL_FALLBACK
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
@@ -210,7 +226,10 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL ?? MODEL_FALLBACK,
+        model,
+        reasoning: {
+          effort: REASONING_EFFORT,
+        },
         instructions: `${SYSTEM_PROMPT}\n\nCSV data (header + rows):\n${csvContext}`,
         input: messages,
         max_output_tokens: MAX_OUTPUT_TOKENS,
@@ -219,20 +238,41 @@ export default async function handler(req, res) {
 
     const payload = await readJsonSafely(response)
     if (!response.ok) {
+      const upstreamMessage =
+        payload.json?.error?.message ??
+        payload.text?.trim() ??
+        'Chat request failed.'
+      logDebug('openai-error', {
+        status: response.status,
+        statusText: response.statusText,
+        model,
+        messageCount: messages.length,
+        upstreamMessage,
+      })
       return json(res, response.status, {
-        error: payload?.error?.message ?? 'Chat request failed.',
+        error: `OpenAI request failed (${response.status} ${response.statusText}): ${upstreamMessage}`,
       })
     }
 
-    const outputText = extractResponseText(payload)
+    const outputText = extractResponseText(payload.json)
     if (!outputText) {
+      logDebug('empty-output', {
+        status: response.status,
+        model,
+        hasJson: Boolean(payload.json),
+        rawPreview: payload.text?.slice(0, 300) ?? '',
+      })
       return json(res, 502, {
-        error: 'The model returned no text response.',
+        error:
+          'The model returned no text response. Check server logs for chat:empty-output.',
       })
     }
 
     return json(res, 200, { outputText })
   } catch (error) {
+    logDebug('handler-error', {
+      message: error instanceof Error ? error.message : 'Unexpected chat server error.',
+    })
     return json(res, 500, {
       error:
         error instanceof Error ? error.message : 'Unexpected chat server error.',
