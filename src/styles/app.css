@@ -525,8 +525,8 @@ h3,
 .summary-card strong {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
-  text-shadow: 0 0 32px rgba(78, 230, 255, 0.6), 0 0 80px rgba(78, 230, 255, 0.22), 0 0 130px rgba(120, 247, 212, 0.1);
-  animation: number-flare 6s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(78, 230, 255, 0.3);
+  animation: number-flare 7s ease-in-out infinite;
 }
 
 .floating-pill {
@@ -659,7 +659,7 @@ h3,
   font-size: clamp(2.8rem, 4vw, 4.4rem);
   line-height: 0.9;
   letter-spacing: -0.05em;
-  text-shadow: 0 0 36px rgba(78, 230, 255, 0.56), 0 0 90px rgba(78, 230, 255, 0.22), 0 0 140px rgba(120, 247, 212, 0.1);
+  text-shadow: 0 0 18px rgba(78, 230, 255, 0.25);
   animation: number-flare 7s ease-in-out infinite;
 }
 
@@ -777,8 +777,8 @@ select:focus {
   font-size: 1.7rem;
   font-weight: 800;
   font-family: 'Space Grotesk', sans-serif;
-  text-shadow: 0 0 28px rgba(78, 230, 255, 0.5), 0 0 60px rgba(78, 230, 255, 0.18);
-  animation: number-flare 5s ease-in-out infinite;
+  text-shadow: 0 0 14px rgba(78, 230, 255, 0.22);
+  animation: number-flare 6s ease-in-out infinite;
 }
 
 .stat-wheel {
@@ -809,7 +809,7 @@ select:focus {
 .stat-wheel svg {
   width: 148px;
   height: 148px;
-  filter: drop-shadow(0 0 12px rgba(78, 230, 255, 0.4));
+  filter: drop-shadow(0 0 6px rgba(78, 230, 255, 0.25));
 }
 
 .stat-wheel-track {
@@ -1190,8 +1190,8 @@ select:focus {
 }
 
 @keyframes number-flare {
-  0%, 100% { text-shadow: 0 0 28px rgba(78, 230, 255, 0.5), 0 0 70px rgba(78, 230, 255, 0.18); }
-  50%       { text-shadow: 0 0 48px rgba(78, 230, 255, 0.72), 0 0 110px rgba(78, 230, 255, 0.28), 0 0 160px rgba(120, 247, 212, 0.12); }
+  0%, 100% { text-shadow: 0 0 16px rgba(78, 230, 255, 0.28); }
+  50%       { text-shadow: 0 0 24px rgba(78, 230, 255, 0.4), 0 0 50px rgba(78, 230, 255, 0.12); }
 }
 
 @keyframes grid-scroll {
