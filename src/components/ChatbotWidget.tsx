@@ -193,7 +193,7 @@ const ChatbotWidget = () => {
       appendMessage({
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: 'The request failed. Check the API key and try again.',
+        content: message,
       })
     } finally {
       setIsSending(false)
