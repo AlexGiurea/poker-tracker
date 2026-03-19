@@ -131,6 +131,19 @@ const extractResponseText = (payload) => {
   return textParts.find((text) => text.length > 0) ?? ''
 }
 
+const readJsonSafely = async (response) => {
+  const text = await response.text()
+  if (!text.trim()) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return json(res, 405, { error: 'Method not allowed.' })
@@ -181,7 +194,7 @@ export default async function handler(req, res) {
       }),
     })
 
-    const payload = await response.json()
+    const payload = await readJsonSafely(response)
     if (!response.ok) {
       return json(res, response.status, {
         error: payload?.error?.message ?? 'Chat request failed.',

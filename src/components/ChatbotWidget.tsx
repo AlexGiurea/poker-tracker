@@ -50,6 +50,22 @@ const loadSessions = (): ChatSession[] => {
   }
 }
 
+const readJsonSafely = async (response: Response) => {
+  const text = await response.text()
+  if (!text.trim()) {
+    return null
+  }
+
+  try {
+    return JSON.parse(text) as {
+      outputText?: string
+      error?: string
+    }
+  } catch {
+    return null
+  }
+}
+
 const ChatbotWidget = () => {
   const assistantName = 'Dealer AI'
   const [isOpen, setIsOpen] = useState(false)
@@ -154,17 +170,14 @@ const ChatbotWidget = () => {
         }),
       })
 
-      const payload = (await response.json()) as {
-        outputText?: string
-        error?: string
-      }
+      const payload = await readJsonSafely(response)
 
       if (!response.ok) {
-        const message = payload.error ?? `Request failed (${response.status})`
+        const message = payload?.error ?? `Request failed (${response.status})`
         throw new Error(message)
       }
 
-      const outputText = payload.outputText ?? 'No response received.'
+      const outputText = payload?.outputText ?? 'No response received.'
 
       appendMessage({
         id: `assistant-${Date.now()}`,
