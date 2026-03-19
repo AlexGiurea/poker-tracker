@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-
 type ChatMessage = {
   id: string
   role: 'assistant' | 'user'
@@ -15,25 +14,13 @@ type ChatSession = {
   messages: ChatMessage[]
 }
 
-const systemPrompt = `You are the Poker Tracker chatbot, speaking with a fun Vegas casino vibe and poker slang.
-You answer questions about sessions, players, and statistics from the CSV data included below.
-Be helpful and concise. If the data is missing, say so and suggest what is available.
-Do not make up new sessions or players.`
-
-const csvDataUrl = '/data/players-results.csv'
 const chatStorageKey = 'pokerTrackerChatSessions'
-
-const getApiKey = () => import.meta.env.VITE_OPENAI_API_KEY as string | undefined
-const getModel = () =>
-  (import.meta.env.VITE_OPENAI_MODEL as string | undefined) ?? 'gpt-5-nano'
-const formatCsvContext = (csvText: string) =>
-  `CSV data (header + rows):\n${csvText}`
 
 const welcomeMessage: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
   content:
-    'Howdy, high roller. Ask about players, buy-ins, profits, or sessions and I will deal the details.',
+    'Ask about a player, a session, or the season totals.',
 }
 
 const buildNewSession = (): ChatSession => {
@@ -51,6 +38,7 @@ const loadSessions = (): ChatSession[] => {
   if (typeof window === 'undefined') return [buildNewSession()]
   const stored = window.localStorage.getItem(chatStorageKey)
   if (!stored) return [buildNewSession()]
+
   try {
     const parsed = JSON.parse(stored) as ChatSession[]
     if (!Array.isArray(parsed) || parsed.length === 0) {
@@ -63,7 +51,7 @@ const loadSessions = (): ChatSession[] => {
 }
 
 const ChatbotWidget = () => {
-  const assistantName = 'Chipster'
+  const assistantName = 'Dealer AI'
   const [isOpen, setIsOpen] = useState(false)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [sessions, setSessions] = useState<ChatSession[]>(() => loadSessions())
@@ -71,8 +59,6 @@ const ChatbotWidget = () => {
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [csvContext, setCsvContext] = useState<string>('')
-  const [isLoadingCsv, setIsLoadingCsv] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
 
   const activeSession =
@@ -97,39 +83,9 @@ const ChatbotWidget = () => {
     }
   }, [isOpen, messages])
 
-  useEffect(() => {
-    let isMounted = true
-    setIsLoadingCsv(true)
-    fetch(csvDataUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Unable to load CSV data file.')
-        }
-        return response.text()
-      })
-      .then((csvText) => {
-        if (isMounted) {
-          setCsvContext(formatCsvContext(csvText))
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setError('Unable to load CSV data. Check the file path.')
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingCsv(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
   const appendMessage = (message: ChatMessage) => {
     if (!activeSession) return
+
     setSessions((prev) =>
       prev.map((session) => {
         if (session.id !== activeSession.id) return session
@@ -138,6 +94,7 @@ const ChatbotWidget = () => {
           session.title === 'New chat' && message.role === 'user'
             ? message.content.slice(0, 40)
             : session.title
+
         return {
           ...session,
           title: nextTitle,
@@ -163,17 +120,8 @@ const ChatbotWidget = () => {
   const handleSend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const trimmed = input.trim()
-    if (!trimmed || isSending) return
 
-    const apiKey = getApiKey()
-    if (!apiKey) {
-      setError('Missing API key. Add VITE_OPENAI_API_KEY to your .env file.')
-      return
-    }
-    if (!csvContext) {
-      setError('CSV data is still loading. Try again in a moment.')
-      return
-    }
+    if (!trimmed || isSending) return
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -183,64 +131,40 @@ const ChatbotWidget = () => {
     const conversationMessages = messages.filter(
       (message) => message.id !== welcomeMessage.id,
     )
+
     appendMessage(userMessage)
     setInput('')
     setIsSending(true)
     setError(null)
 
     try {
-      const response = await fetch('https://api.openai.com/v1/responses', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: getModel(),
-          input: [
-            {
-              role: 'system',
-              content: [
-                {
-                  type: 'input_text',
-                  text: `${systemPrompt}\n\n${csvContext}`,
-                },
-              ],
-            },
-            ...conversationMessages.map((message) => ({
-              role: message.role,
-              content: [{ type: 'input_text', text: message.content }],
-            })),
+          messages: [
+            ...conversationMessages,
             {
               role: 'user',
-              content: [{ type: 'input_text', text: trimmed }],
+              content: trimmed,
             },
           ],
         }),
       })
 
       const payload = (await response.json()) as {
-        output_text?: string
-        output?: Array<{
-          type?: string
-          content?: Array<{ type?: string; text?: string; value?: string }>
-        }>
-        error?: { message?: string }
+        outputText?: string
+        error?: string
       }
 
       if (!response.ok) {
-        const message =
-          payload.error?.message ?? `Request failed (${response.status})`
+        const message = payload.error ?? `Request failed (${response.status})`
         throw new Error(message)
       }
 
-      const outputText =
-        payload.output_text ??
-        payload.output
-          ?.flatMap((item) => item.content ?? [])
-          .map((part) => part.text ?? part.value ?? '')
-          .find((text) => text.trim().length > 0) ??
-        'No response received.'
+      const outputText = payload.outputText ?? 'No response received.'
 
       appendMessage({
         id: `assistant-${Date.now()}`,
@@ -256,8 +180,7 @@ const ChatbotWidget = () => {
       appendMessage({
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content:
-          'Dealer error. The line is jammed. Check the API key and try again.',
+        content: 'The request failed. Check the API key and try again.',
       })
     } finally {
       setIsSending(false)
@@ -278,17 +201,15 @@ const ChatbotWidget = () => {
           aria-expanded={isOpen}
         >
           <span className="chatbot-toggle-label">Ask {assistantName}</span>
-          <span className="chatbot-toggle-icon" aria-hidden="true">
-            💬
-          </span>
         </button>
       ) : null}
+
       {isOpen ? (
         <div className="chatbot-panel" role="dialog" aria-label="Poker chatbot">
           <div className="chatbot-header">
             <div>
-              <strong>Poker Concierge</strong>
-              <p>Vegas insights on demand</p>
+              <strong>Poker concierge</strong>
+              <p>Ask the data layer anything</p>
             </div>
             <div className="chatbot-header-actions">
               <button
@@ -298,7 +219,7 @@ const ChatbotWidget = () => {
                 aria-label="View past chats"
                 aria-pressed={isHistoryOpen}
               >
-                🕘
+                History
               </button>
               <button
                 type="button"
@@ -306,10 +227,11 @@ const ChatbotWidget = () => {
                 onClick={() => setIsOpen(false)}
                 aria-label="Close chat"
               >
-                ×
+                X
               </button>
             </div>
           </div>
+
           {isHistoryOpen ? (
             <div className="chatbot-history">
               <div className="chatbot-history-header">
@@ -361,6 +283,7 @@ const ChatbotWidget = () => {
               <div ref={endRef} />
             </div>
           )}
+
           <form className="chatbot-input" onSubmit={handleSend}>
             <input
               type="text"
@@ -373,12 +296,9 @@ const ChatbotWidget = () => {
               type="submit"
               disabled={isSending || isHistoryOpen || !input.trim()}
             >
-              {isSending ? 'Dealing...' : 'Send'}
+              {isSending ? 'Thinking...' : 'Send'}
             </button>
           </form>
-          {isLoadingCsv ? (
-            <p className="chatbot-status">Loading the CSV data...</p>
-          ) : null}
           {error ? <p className="chatbot-error">{error}</p> : null}
         </div>
       ) : null}

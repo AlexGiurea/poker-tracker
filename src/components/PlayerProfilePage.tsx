@@ -1,21 +1,9 @@
 import type { Session } from '../types/poker'
+import { buildPlayerAggregates, formatCurrency, formatPercent } from '../lib/analytics'
 
 type PlayerProfilePageProps = {
   sessions: Session[]
   playerName: string
-}
-
-type PlayerProfile = {
-  name: string
-  totalPaid: number
-  totalChipValue: number
-  totalProfit: number
-  sessionsPlayed: number
-  averageProfit: number
-  averagePaid: number
-  bestSessionProfit: number
-  worstSessionProfit: number
-  roi: number
 }
 
 type PlayerSession = {
@@ -26,56 +14,26 @@ type PlayerSession = {
   profit: number
 }
 
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`
-
 const buildProfile = (sessions: Session[], name: string) => {
-  const sessionProfits: number[] = []
-  const sessionRows: PlayerSession[] = []
+  const profile = buildPlayerAggregates(sessions).find((player) => player.name === name)
 
-  let totalPaid = 0
-  let totalChipValue = 0
+  if (!profile) return null
 
-  sessions.forEach((session) => {
-    const player = Object.values(session.players).find(
-      (entry) => entry.name === name,
-    )
-    if (!player) return
+  const sessionRows: PlayerSession[] = sessions.flatMap((session) => {
+    const player = Object.values(session.players).find((entry) => entry.name === name)
 
-    const profit = player.chipValue - player.paid
-    totalPaid += player.paid
-    totalChipValue += player.chipValue
-    sessionProfits.push(profit)
-    sessionRows.push({
-      sessionId: session.id,
-      sessionLabel: session.label,
-      paid: player.paid,
-      chipValue: player.chipValue,
-      profit,
-    })
+    if (!player) return []
+
+    return [
+      {
+        sessionId: session.id,
+        sessionLabel: session.label,
+        paid: player.paid,
+        chipValue: player.chipValue,
+        profit: player.chipValue - player.paid,
+      },
+    ]
   })
-
-  if (!sessionRows.length) return null
-
-  const totalProfit = totalChipValue - totalPaid
-  const sessionsPlayed = sessionRows.length
-  const averageProfit = totalProfit / sessionsPlayed
-  const averagePaid = totalPaid / sessionsPlayed
-  const bestSessionProfit = Math.max(...sessionProfits)
-  const worstSessionProfit = Math.min(...sessionProfits)
-  const roi = totalPaid > 0 ? totalProfit / totalPaid : 0
-
-  const profile: PlayerProfile = {
-    name,
-    totalPaid,
-    totalChipValue,
-    totalProfit,
-    sessionsPlayed,
-    averageProfit,
-    averagePaid,
-    bestSessionProfit,
-    worstSessionProfit,
-    roi,
-  }
 
   return { profile, sessions: sessionRows }
 }
@@ -89,7 +47,7 @@ const PlayerProfilePage = ({
   if (!result) {
     return (
       <div className="profile-page">
-        <div className="profile-page-header">
+        <div className="profile-page-header glass-panel">
           <h2>Profile not found</h2>
           <p className="subtitle">Select a player to view their stats.</p>
         </div>
@@ -101,7 +59,7 @@ const PlayerProfilePage = ({
 
   return (
     <div className="profile-page">
-      <div className="profile-page-header">
+      <div className="profile-page-header glass-panel">
         <div className="profile-hero">
           <div className="profile-identity">
             <div className="profile-avatar" aria-hidden="true">
@@ -136,10 +94,10 @@ const PlayerProfilePage = ({
         <div className="stat-card">
           <p className="stat-title">Total chip value</p>
           <p className="stat-value">{formatCurrency(profile.totalChipValue)}</p>
-          <p className="stat-meta">All cashouts</p>
+          <p className="stat-meta">All cash-outs</p>
         </div>
         <div className="stat-card">
-          <p className="stat-title">Avg profit</p>
+          <p className="stat-title">Average profit</p>
           <p className="stat-value">{formatCurrency(profile.averageProfit)}</p>
           <p className="stat-meta">Per session</p>
         </div>
@@ -155,21 +113,21 @@ const PlayerProfilePage = ({
         </div>
         <div className="stat-card">
           <p className="stat-title">ROI</p>
-          <p className="stat-value">{(profile.roi * 100).toFixed(1)}%</p>
-          <p className="stat-meta">Total profit / total paid</p>
+          <p className="stat-value">{formatPercent(profile.roi)}</p>
+          <p className="stat-meta">Total profit divided by total paid</p>
         </div>
         <div className="stat-card">
-          <p className="stat-title">Avg buy-in</p>
+          <p className="stat-title">Average buy-in</p>
           <p className="stat-value">{formatCurrency(profile.averagePaid)}</p>
           <p className="stat-meta">Per session</p>
         </div>
       </section>
 
-      <section className="profile-sessions">
+      <section className="profile-sessions glass-panel">
         <div className="column-header">
           <div>
             <h3>Session history</h3>
-            <p>Performance across each day</p>
+            <p>Performance across each tracked day</p>
           </div>
         </div>
         <div className="profile-session-list">
@@ -178,7 +136,7 @@ const PlayerProfilePage = ({
               <div>
                 <p className="profile-session-title">{session.sessionLabel}</p>
                 <p className="profile-session-meta">
-                  Paid {formatCurrency(session.paid)} · Chip Value{' '}
+                  Paid {formatCurrency(session.paid)} / Chip value{' '}
                   {formatCurrency(session.chipValue)}
                 </p>
               </div>

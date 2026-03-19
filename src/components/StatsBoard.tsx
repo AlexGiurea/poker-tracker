@@ -1,122 +1,74 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { Session } from '../types/poker'
+import {
+  buildPlayerAggregates,
+  buildSeasonSummary,
+  formatCurrency,
+  formatPercent,
+} from '../lib/analytics'
 
 type StatsBoardProps = {
   sessions: Session[]
 }
 
-type PlayerStats = {
-  name: string
-  totalPaid: number
-  totalChipValue: number
-  totalProfit: number
-  sessionsPlayed: number
-}
-
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`
-const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`
-
-const buildPlayerStats = (sessions: Session[]) => {
-  const totals = new Map<string, PlayerStats>()
-
-  sessions.forEach((session) => {
-    Object.values(session.players).forEach((player) => {
-      const existing = totals.get(player.name) ?? {
-        name: player.name,
-        totalPaid: 0,
-        totalChipValue: 0,
-        totalProfit: 0,
-        sessionsPlayed: 0,
-      }
-
-      const updated = {
-        ...existing,
-        totalPaid: existing.totalPaid + player.paid,
-        totalChipValue: existing.totalChipValue + player.chipValue,
-        sessionsPlayed: existing.sessionsPlayed + 1,
-      }
-
-      updated.totalProfit = updated.totalChipValue - updated.totalPaid
-      totals.set(player.name, updated)
-    })
-  })
-
-  return Array.from(totals.values())
-}
-
-const pickTop = (
-  players: PlayerStats[],
-  selector: (stats: PlayerStats) => number,
-) =>
-  players.reduce<PlayerStats | null>((winner, current) => {
+const pickTop = <T,>(items: T[], selector: (item: T) => number) =>
+  items.reduce<T | null>((winner, current) => {
     if (!winner) return current
     return selector(current) > selector(winner) ? current : winner
   }, null)
 
 const StatsBoard = ({ sessions }: StatsBoardProps) => {
-  const players = buildPlayerStats(sessions)
-  const totalPaid = players.reduce((sum, player) => sum + player.totalPaid, 0)
-  const totalChipValue = players.reduce(
-    (sum, player) => sum + player.totalChipValue,
-    0,
-  )
-  const totalProfit = totalChipValue - totalPaid
-  const totalRoi = totalPaid > 0 ? totalProfit / totalPaid : 0
-  const totalEntries = sessions.reduce(
-    (sum, session) => sum + Object.keys(session.players).length,
-    0,
-  )
-
+  const players = buildPlayerAggregates(sessions)
+  const summary = buildSeasonSummary(sessions)
   const mostProfitable = pickTop(players, (player) => player.totalProfit)
   const mostBuyIns = pickTop(players, (player) => player.totalPaid)
   const mostSessions = pickTop(players, (player) => player.sessionsPlayed)
   const [metric, setMetric] = useState<
     'profit' | 'paid' | 'chipValue' | 'sessions'
   >('profit')
-  const metricConfig = useMemo(
-    () => ({
-      profit: {
-        label: 'Profit',
-        value: (player: PlayerStats) => player.totalProfit,
-        format: (value: number) => formatCurrency(value),
-      },
-      paid: {
-        label: 'Paid',
-        value: (player: PlayerStats) => player.totalPaid,
-        format: (value: number) => formatCurrency(value),
-      },
-      chipValue: {
-        label: 'Chip value',
-        value: (player: PlayerStats) => player.totalChipValue,
-        format: (value: number) => formatCurrency(value),
-      },
-      sessions: {
-        label: 'Sessions',
-        value: (player: PlayerStats) => player.sessionsPlayed,
-        format: (value: number) => String(value),
-      },
-    }),
-    [],
-  )
+
+  const metricConfig = {
+    profit: {
+      label: 'Profit',
+      value: (player: (typeof players)[number]) => player.totalProfit,
+      format: formatCurrency,
+    },
+    paid: {
+      label: 'Paid',
+      value: (player: (typeof players)[number]) => player.totalPaid,
+      format: formatCurrency,
+    },
+    chipValue: {
+      label: 'Chip value',
+      value: (player: (typeof players)[number]) => player.totalChipValue,
+      format: formatCurrency,
+    },
+    sessions: {
+      label: 'Sessions',
+      value: (player: (typeof players)[number]) => player.sessionsPlayed,
+      format: (value: number) => String(value),
+    },
+  }
+
   const metricValues = metricConfig[metric]
   const sortedPlayers = [...players].sort(
     (a, b) => metricValues.value(b) - metricValues.value(a),
   )
   const maxMetricValue = Math.max(
     1,
-    ...sortedPlayers.map((player) => metricValues.value(player)),
+    ...sortedPlayers.map((player) => Math.abs(metricValues.value(player))),
   )
-  const roiPercent = Math.max(0, Math.min(1, totalRoi))
+  const roiPercent = Math.min(1, Math.abs(summary.totalRoi))
   const roiStroke = 2 * Math.PI * 46
   const roiDash = roiStroke * roiPercent
 
   return (
     <div className="board">
-      <section className="column">
+      <section className="column glass-panel">
         <div className="column-header">
           <div>
-            <h2>Statistics</h2>
-            <p>Highlights across all days</p>
+            <p className="eyebrow">Highlights</p>
+            <h2>Who is driving the season</h2>
           </div>
         </div>
         <div className="stats-grid">
@@ -139,48 +91,59 @@ const StatsBoard = ({ sessions }: StatsBoardProps) => {
             <p className="stat-value">{mostSessions?.sessionsPlayed ?? 0}</p>
             <p className="stat-meta">{mostSessions?.name ?? 'No players yet'}</p>
           </div>
+          <div className="stat-card">
+            <p className="stat-title">Best session</p>
+            <p className="stat-value">
+              {summary.bestSession
+                ? formatCurrency(summary.bestSession.totalProfit)
+                : '$0.00'}
+            </p>
+            <p className="stat-meta">{summary.bestSession?.label ?? 'No sessions yet'}</p>
+          </div>
         </div>
       </section>
-      <section className="column">
+
+      <section className="column glass-panel">
         <div className="column-header">
           <div>
-            <h2>Statistics</h2>
-            <p>Totals across all days</p>
+            <p className="eyebrow">Totals</p>
+            <h2>Full season ledger</h2>
           </div>
         </div>
         <div className="stats-grid">
           <div className="stat-card">
             <p className="stat-title">Total buy-ins</p>
-            <p className="stat-value">{formatCurrency(totalPaid)}</p>
+            <p className="stat-value">{formatCurrency(summary.totalPaid)}</p>
             <p className="stat-meta">All sessions combined</p>
           </div>
           <div className="stat-card">
             <p className="stat-title">Total chip value</p>
-            <p className="stat-value">{formatCurrency(totalChipValue)}</p>
-            <p className="stat-meta">All sessions combined</p>
+            <p className="stat-value">{formatCurrency(summary.totalChipValue)}</p>
+            <p className="stat-meta">All cash-outs combined</p>
           </div>
           <div className="stat-card">
             <p className="stat-title">Total profit</p>
-            <p className="stat-value">{formatCurrency(totalProfit)}</p>
-            <p className="stat-meta">All sessions combined</p>
+            <p className="stat-value">{formatCurrency(summary.totalProfit)}</p>
+            <p className="stat-meta">Net across the season</p>
           </div>
           <div className="stat-card">
             <p className="stat-title">Unique players</p>
-            <p className="stat-value">{players.length}</p>
+            <p className="stat-value">{summary.uniquePlayers}</p>
             <p className="stat-meta">Across all days</p>
           </div>
           <div className="stat-card">
-            <p className="stat-title">Total player entries</p>
-            <p className="stat-value">{totalEntries}</p>
-            <p className="stat-meta">Day-by-day appearances</p>
+            <p className="stat-title">Average table size</p>
+            <p className="stat-value">{summary.averageTableSize.toFixed(1)}</p>
+            <p className="stat-meta">Players per session</p>
           </div>
         </div>
       </section>
-      <section className="column">
+
+      <section className="column glass-panel">
         <div className="column-header">
           <div>
-            <h2>Interactive insights</h2>
-            <p>Explore performance by player</p>
+            <p className="eyebrow">Interactive</p>
+            <h2>Explore the leaderboard</h2>
           </div>
         </div>
         <div className="stats-interactive">
@@ -195,7 +158,9 @@ const StatsBoard = ({ sessions }: StatsBoardProps) => {
                 strokeWidth="12"
               />
               <circle
-                className="stat-wheel-value"
+                className={`stat-wheel-value ${
+                  summary.totalRoi >= 0 ? '' : 'stat-wheel-negative'
+                }`}
                 cx="60"
                 cy="60"
                 r="46"
@@ -207,10 +172,11 @@ const StatsBoard = ({ sessions }: StatsBoardProps) => {
             </svg>
             <div className="stat-wheel-label">
               <span>ROI</span>
-              <strong>{formatPercent(totalRoi)}</strong>
-              <p>Profit vs buy-ins</p>
+              <strong>{formatPercent(summary.totalRoi)}</strong>
+              <p>Profit versus total buy-ins</p>
             </div>
           </div>
+
           <div className="stat-bars">
             <div className="stat-bar-header">
               <h3>Player leaderboard</h3>
@@ -229,19 +195,22 @@ const StatsBoard = ({ sessions }: StatsBoardProps) => {
                 ))}
               </div>
             </div>
+
             {sortedPlayers.length === 0 ? (
               <p className="empty-state">No player stats yet.</p>
             ) : (
               <div className="stat-bar-list">
                 {sortedPlayers.map((player) => {
                   const value = metricValues.value(player)
-                  const width = Math.max(4, (value / maxMetricValue) * 100)
+                  const width = Math.max(6, (Math.abs(value) / maxMetricValue) * 100)
                   return (
                     <div key={player.name} className="stat-bar-row">
                       <span>{player.name}</span>
                       <div className="stat-bar-track">
                         <div
-                          className="stat-bar-fill"
+                          className={`stat-bar-fill ${
+                            value >= 0 ? '' : 'stat-bar-fill-negative'
+                          }`}
                           style={{ width: `${width}%` }}
                         />
                       </div>

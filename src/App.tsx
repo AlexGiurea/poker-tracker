@@ -2,11 +2,15 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import Board from './components/Board'
 import ChatbotWidget from './components/ChatbotWidget'
+import LandingPage from './components/LandingPage'
 import PlayerProfilePage from './components/PlayerProfilePage'
 import ProfilesBoard from './components/ProfilesBoard'
 import StatsBoard from './components/StatsBoard'
 import { seedData } from './data/seed'
+import { buildPlayerAggregates, buildSeasonSummary, formatCurrency, formatPercent } from './lib/analytics'
 import type { BoardData, Player, Session } from './types/poker'
+
+type DashboardPage = 'sessions' | 'stats' | 'profiles' | 'profile'
 
 const toNumber = (value: string) => {
   const parsed = Number.parseFloat(value)
@@ -114,14 +118,19 @@ const toSessionId = (label: string, existing: Set<string>) => {
   return candidate
 }
 
+const pageTitles: Record<Exclude<DashboardPage, 'profile'>, string> = {
+  sessions: 'Session control room',
+  stats: 'Season analytics',
+  profiles: 'Player profiles',
+}
+
 const App = () => {
   const [data, setData] = useState<BoardData>(() =>
     normalizeBoardData(seedData),
   )
   const normalizedData = normalizeBoardData(data)
-  const [activePage, setActivePage] = useState<
-    'sessions' | 'stats' | 'profiles' | 'profile'
-  >('stats')
+  const [appView, setAppView] = useState<'landing' | 'dashboard'>('landing')
+  const [activePage, setActivePage] = useState<DashboardPage>('stats')
   const [selectedSessionId, setSelectedSessionId] = useState(
     normalizedData.sessions[0]?.id ?? '',
   )
@@ -147,12 +156,16 @@ const App = () => {
     if (normalizedData !== data) {
       setData(normalizedData)
     }
-  }, [data, normalizedData, setData])
+  }, [data, normalizedData])
 
   const session = normalizedData.sessions.find(
     (current) => current.id === selectedSessionId,
   )
-
+  const seasonSummary = buildSeasonSummary(normalizedData.sessions)
+  const leaderboard = buildPlayerAggregates(normalizedData.sessions)
+    .sort((a, b) => b.totalProfit - a.totalProfit)
+    .slice(0, 4)
+  const activeDashboardTab = activePage === 'profile' ? 'profiles' : activePage
 
   const updateSession = (updatedSession: Session) => {
     setData((prev) => ({
@@ -185,9 +198,10 @@ const App = () => {
       paid: toNumber(newPaid),
       chipValue: toNumber(newChipValue),
     }
-
+    const targetColumnId = session.columns.find((column) => column.id === 'playing')?.id
+      ?? session.columns[0]?.id
     const updatedColumns = session.columns.map((column) =>
-      column.id === 'playing'
+      column.id === targetColumnId
         ? { ...column, playerIds: [...column.playerIds, id] }
         : column,
     )
@@ -216,6 +230,7 @@ const App = () => {
 
     setData((prev) => ({ sessions: [...prev.sessions, nextSession] }))
     setSelectedSessionId(id)
+    setAppView('dashboard')
     setActivePage('sessions')
     setNewSessionLabel(`Day ${getNextDayNumber(normalizedData.sessions) + 1}`)
   }
@@ -238,147 +253,290 @@ const App = () => {
     setNewSessionLabel(`Day ${getNextDayNumber(nextSessions)}`)
   }
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        {activePage === 'profile' ? (
-          <button
-            type="button"
-            className="app-back"
-            onClick={() => setActivePage('profiles')}
-          >
-            Back to profiles
-          </button>
-        ) : null}
-        <p className="eyebrow">Poker Session Dashboard</p>
-        <h1>Poker Tracker</h1>
-        <div className="page-tabs">
-          <button
-            type="button"
-            className={activePage === 'sessions' ? 'active' : ''}
-            onClick={() => setActivePage('sessions')}
-          >
-            Sessions
-          </button>
-          <button
-            type="button"
-            className={activePage === 'stats' ? 'active' : ''}
-            onClick={() => setActivePage('stats')}
-          >
-            Statistics
-          </button>
-          <button
-            type="button"
-            className={activePage === 'profiles' ? 'active' : ''}
-            onClick={() => setActivePage('profiles')}
-          >
-            Profiles
-          </button>
-        </div>
-      </header>
+  const openDashboard = (page: Exclude<DashboardPage, 'profile'> = 'stats') => {
+    setAppView('dashboard')
+    setActivePage(page)
+  }
 
-      {activePage === 'stats' ? (
-        <StatsBoard sessions={normalizedData.sessions} />
-      ) : activePage === 'profiles' ? (
-        <ProfilesBoard
+  return (
+    <div className="app-shell">
+      <div className="ambient ambient-a" />
+      <div className="ambient ambient-b" />
+      <div className="ambient ambient-c" />
+
+      {appView === 'landing' ? (
+        <LandingPage
           sessions={normalizedData.sessions}
-          selectedPlayerName={selectedPlayerName}
-          onSelectPlayer={setSelectedPlayerName}
-          onOpenProfile={(playerName) => {
-            setSelectedPlayerName(playerName)
-            setActivePage('profile')
-          }}
+          onOpenDashboard={openDashboard}
         />
-      ) : activePage === 'profile' ? (
-        <PlayerProfilePage
-          sessions={normalizedData.sessions}
-          playerName={selectedPlayerName}
-        />
-      ) : session ? (
-        <>
-          <section className="controls">
-            <form className="add-session" onSubmit={handleAddSession}>
-              <label>
-                New day
-                <input
-                  type="text"
-                  value={newSessionLabel}
-                  onChange={(event) => setNewSessionLabel(event.target.value)}
-                  placeholder={`Day ${getNextDayNumber(
-                    normalizedData.sessions,
-                  )}`}
-                />
-              </label>
-              <button type="submit">Add day</button>
+      ) : (
+        <div className="app dashboard-app">
+          <header className="dashboard-header glass-panel">
+            <div className="dashboard-header-top">
               <button
                 type="button"
-                className="remove-session"
-                onClick={handleRemoveSession}
-                disabled={normalizedData.sessions.length <= 1}
+                className="brand-button"
+                onClick={() => setAppView('landing')}
               >
-                Remove day
+                Poker Tracker
               </button>
-            </form>
-            <div className="session-tabs">
-              {normalizedData.sessions.map((current) => (
+              <div className="dashboard-header-actions">
+                {activePage === 'profile' ? (
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => setActivePage('profiles')}
+                  >
+                    Back to profiles
+                  </button>
+                ) : null}
                 <button
-                  key={current.id}
                   type="button"
-                  className={current.id === selectedSessionId ? 'active' : ''}
-                  onClick={() => setSelectedSessionId(current.id)}
+                  className="ghost-button"
+                  onClick={() => setAppView('landing')}
                 >
-                  {current.label}
+                  Landing page
                 </button>
-              ))}
+              </div>
             </div>
-          </section>
-          <section className="controls">
-            <form className="add-player" onSubmit={handleAddPlayer}>
-              <label>
-                Player
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(event) => setNewName(event.target.value)}
-                  placeholder="Name"
-                />
-              </label>
-              <label>
-                Paid
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newPaid}
-                  onChange={(event) => setNewPaid(event.target.value)}
-                />
-              </label>
-              <label>
-                Chip Value ($)
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newChipValue}
-                  onChange={(event) => setNewChipValue(event.target.value)}
-                />
-              </label>
-              <button type="submit">Add player</button>
-            </form>
-          </section>
-          <Board
-            session={session}
-            onSessionChange={updateSession}
-            onPlayerUpdate={handlePlayerUpdate}
-            onViewProfile={(playerName) => {
-              setSelectedPlayerName(playerName)
-              setActivePage('profile')
-            }}
-          />
-        </>
-      ) : (
-        <p className="empty-state">No session data available.</p>
+
+            <div className="dashboard-hero">
+              <div className="dashboard-copy">
+                <p className="eyebrow">League command center</p>
+                <h1>{pageTitles[activeDashboardTab]}</h1>
+                <p className="subtitle">
+                  {activeDashboardTab === 'sessions'
+                    ? 'Manage nights, adjust player results, and keep the ledger current.'
+                    : activeDashboardTab === 'stats'
+                      ? 'Follow the overall shape of the season, not just a single table.'
+                      : 'Open every player record with full context across the full run.'}
+                </p>
+              </div>
+
+              <div className="dashboard-summary-grid">
+                <article className="summary-card">
+                  <div className="summary-card-top">
+                    <span className="summary-label">Net profit</span>
+                    <strong className="summary-card-value">
+                      {formatCurrency(seasonSummary.totalProfit)}
+                    </strong>
+                  </div>
+                  <p className="summary-card-meta">
+                    {formatPercent(seasonSummary.totalRoi)} ROI
+                  </p>
+                </article>
+                <article className="summary-card">
+                  <div className="summary-card-top">
+                    <span className="summary-label">Tracked entries</span>
+                    <strong className="summary-card-value">
+                      {seasonSummary.totalEntries}
+                    </strong>
+                  </div>
+                  <p className="summary-card-meta">
+                    {seasonSummary.uniquePlayers} unique players
+                  </p>
+                </article>
+                <article className="summary-card">
+                  <div className="summary-card-top">
+                    <span className="summary-label">Latest session</span>
+                    <strong className="summary-card-value">
+                      {seasonSummary.latestSession?.label ?? 'No sessions'}
+                    </strong>
+                  </div>
+                  <p className="summary-card-meta">
+                    {seasonSummary.latestSession
+                      ? `${seasonSummary.latestSession.playerCount} players`
+                      : 'Ready for the next table'}
+                  </p>
+                </article>
+              </div>
+
+              <aside className="dashboard-spotlight glass-panel">
+                <div>
+                  <p className="eyebrow">Top profit table</p>
+                  <h2>Current leaders</h2>
+                </div>
+                <div className="spotlight-list">
+                  {leaderboard.map((player, index) => (
+                    <button
+                      key={player.name}
+                      type="button"
+                      className="spotlight-row"
+                      onClick={() => {
+                        setSelectedPlayerName(player.name)
+                        setActivePage('profile')
+                      }}
+                    >
+                      <span className="spotlight-rank">0{index + 1}</span>
+                      <span>{player.name}</span>
+                      <span
+                        className={player.totalProfit >= 0 ? 'positive' : 'negative'}
+                      >
+                        {formatCurrency(player.totalProfit)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+            </div>
+
+            <div className="page-tabs dashboard-tabs">
+              <button
+                type="button"
+                className={activeDashboardTab === 'sessions' ? 'active' : ''}
+                onClick={() => setActivePage('sessions')}
+              >
+                Sessions
+              </button>
+              <button
+                type="button"
+                className={activeDashboardTab === 'stats' ? 'active' : ''}
+                onClick={() => setActivePage('stats')}
+              >
+                Statistics
+              </button>
+              <button
+                type="button"
+                className={activeDashboardTab === 'profiles' ? 'active' : ''}
+                onClick={() => setActivePage('profiles')}
+              >
+                Profiles
+              </button>
+            </div>
+          </header>
+
+          {activePage === 'stats' ? (
+            <StatsBoard sessions={normalizedData.sessions} />
+          ) : activePage === 'profiles' ? (
+            <ProfilesBoard
+              sessions={normalizedData.sessions}
+              selectedPlayerName={selectedPlayerName}
+              onSelectPlayer={setSelectedPlayerName}
+              onOpenProfile={(playerName) => {
+                setSelectedPlayerName(playerName)
+                setActivePage('profile')
+              }}
+            />
+          ) : activePage === 'profile' ? (
+            <PlayerProfilePage
+              sessions={normalizedData.sessions}
+              playerName={selectedPlayerName}
+            />
+          ) : session ? (
+            <>
+              <section className="dashboard-form-grid">
+                <form className="glass-panel form-panel" onSubmit={handleAddSession}>
+                  <div className="form-panel-header">
+                    <div>
+                      <p className="eyebrow">Session builder</p>
+                      <h2>Add a new poker day</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className="ghost-button danger-button"
+                      onClick={handleRemoveSession}
+                      disabled={normalizedData.sessions.length <= 1}
+                    >
+                      Remove selected day
+                    </button>
+                  </div>
+                  <div className="session-form-fields">
+                    <label>
+                      Day label
+                      <input
+                        type="text"
+                        value={newSessionLabel}
+                        onChange={(event) => setNewSessionLabel(event.target.value)}
+                        placeholder={`Day ${getNextDayNumber(normalizedData.sessions)}`}
+                      />
+                    </label>
+                    <button type="submit" className="primary-button">
+                      Add day
+                    </button>
+                  </div>
+                </form>
+
+                <form className="glass-panel form-panel" onSubmit={handleAddPlayer}>
+                  <div className="form-panel-header">
+                    <div>
+                      <p className="eyebrow">Player entry</p>
+                      <h2>Add a player to {session.label}</h2>
+                    </div>
+                  </div>
+                  <div className="player-form-fields">
+                    <label>
+                      Player
+                      <input
+                        type="text"
+                        value={newName}
+                        onChange={(event) => setNewName(event.target.value)}
+                        placeholder="Name"
+                      />
+                    </label>
+                    <label>
+                      Paid
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newPaid}
+                        onChange={(event) => setNewPaid(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Chip value
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newChipValue}
+                        onChange={(event) => setNewChipValue(event.target.value)}
+                      />
+                    </label>
+                    <button type="submit" className="primary-button">
+                      Add player
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section className="glass-panel session-switcher">
+                <div className="column-header">
+                  <div>
+                    <h2>Jump between sessions</h2>
+                    <p>{normalizedData.sessions.length} days tracked</p>
+                  </div>
+                </div>
+                <div className="session-tabs">
+                  {normalizedData.sessions.map((current) => (
+                    <button
+                      key={current.id}
+                      type="button"
+                      className={current.id === selectedSessionId ? 'active' : ''}
+                      onClick={() => setSelectedSessionId(current.id)}
+                    >
+                      {current.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <Board
+                session={session}
+                onSessionChange={updateSession}
+                onPlayerUpdate={handlePlayerUpdate}
+                onViewProfile={(playerName) => {
+                  setSelectedPlayerName(playerName)
+                  setActivePage('profile')
+                }}
+              />
+            </>
+          ) : (
+            <p className="empty-state">No session data available.</p>
+          )}
+        </div>
       )}
+
       <ChatbotWidget />
     </div>
   )
