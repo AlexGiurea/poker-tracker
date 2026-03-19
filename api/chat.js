@@ -6,7 +6,7 @@ const MAX_REQUESTS_PER_WINDOW = 20
 const MAX_MESSAGES = 10
 const MAX_MESSAGE_CHARS = 500
 const MAX_TOTAL_CHARS = 3000
-const MAX_OUTPUT_TOKENS = 140
+const MAX_OUTPUT_TOKENS = 320
 const MODEL_FALLBACK = 'gpt-5.4-mini'
 const REASONING_EFFORT = 'low'
 
@@ -158,6 +158,10 @@ const extractResponseText = (payload) => {
   return textParts.find((text) => text.length > 0) ?? ''
 }
 
+const isMaxTokenIncomplete = (payload) =>
+  payload?.status === 'incomplete' &&
+  payload?.incomplete_details?.reason === 'max_output_tokens'
+
 const readJsonSafely = async (response) => {
   const text = await response.text()
   if (!text.trim()) {
@@ -260,11 +264,14 @@ export default async function handler(req, res) {
         status: response.status,
         model,
         hasJson: Boolean(payload.json),
+        responseState: payload.json?.status ?? null,
+        incompleteReason: payload.json?.incomplete_details?.reason ?? null,
         rawPreview: payload.text?.slice(0, 300) ?? '',
       })
       return json(res, 502, {
-        error:
-          'The model returned no text response. Check server logs for chat:empty-output.',
+        error: isMaxTokenIncomplete(payload.json)
+          ? 'The model used its token budget before producing a final answer. Try again.'
+          : 'The model returned no text response. Check server logs for chat:empty-output.',
       })
     }
 
