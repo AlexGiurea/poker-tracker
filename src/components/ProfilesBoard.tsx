@@ -29,8 +29,8 @@ const ProfilesBoard = ({
         <div className="column-header">
           <div>
             <p className="eyebrow">Profiles</p>
-            <h2>All-time player snapshots</h2>
-            <p>Select a card, then open the full profile.</p>
+            <h2>Open any player profile</h2>
+            <p>One click opens the full page with stats, session history, and trend line.</p>
           </div>
         </div>
         {players.length === 0 ? (
@@ -40,12 +40,9 @@ const ProfilesBoard = ({
             {sortedPlayers.map((player) => {
               const isSelected = player.name === activePlayer?.name
               return (
-                <button
+                <article
                   key={player.name}
-                  type="button"
                   className={`profile-card glass-panel ${isSelected ? 'selected' : ''}`}
-                  onClick={() => onSelectPlayer?.(player.name)}
-                  onDoubleClick={() => onOpenProfile?.(player.name)}
                 >
                   <div className="profile-header">
                     <h3>{player.name}</h3>
@@ -71,35 +68,23 @@ const ProfilesBoard = ({
                       <span>{formatCurrency(player.averageProfit)}</span>
                     </div>
                     <div>
-                      <span className="profile-label">Best session</span>
-                      <span>{formatCurrency(player.bestSessionProfit)}</span>
-                    </div>
-                    <div>
-                      <span className="profile-label">Worst session</span>
-                      <span>{formatCurrency(player.worstSessionProfit)}</span>
-                    </div>
-                    <div>
                       <span className="profile-label">ROI</span>
                       <span>{formatPercent(player.roi)}</span>
-                    </div>
-                    <div>
-                      <span className="profile-label">Avg buy-in</span>
-                      <span>{formatCurrency(player.averagePaid)}</span>
                     </div>
                   </div>
                   <div className="profile-actions">
                     <button
                       type="button"
-                      className="profile-link"
-                      onClick={(event) => {
-                        event.stopPropagation()
+                      className="ghost-button profile-card-cta"
+                      onClick={() => {
+                        onSelectPlayer?.(player.name)
                         onOpenProfile?.(player.name)
                       }}
                     >
-                      Open full profile
+                      View profile
                     </button>
                   </div>
-                </button>
+                </article>
               )
             })}
           </div>

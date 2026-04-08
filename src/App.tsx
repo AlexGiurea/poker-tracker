@@ -119,9 +119,15 @@ const toSessionId = (label: string, existing: Set<string>) => {
 }
 
 const pageTitles: Record<Exclude<DashboardPage, 'profile'>, string> = {
-  sessions: 'Session control room',
-  stats: 'Season analytics',
-  profiles: 'Player profiles',
+  sessions: 'Sessions',
+  stats: 'Statistics',
+  profiles: 'Profiles',
+}
+
+const pageDescriptions: Record<Exclude<DashboardPage, 'profile'>, string> = {
+  sessions: 'Add players, update results, and manage each poker night.',
+  stats: 'See the season at a glance with totals, ROI, and leaderboard context.',
+  profiles: 'Jump straight into any player and review long-term performance.',
 }
 
 const App = () => {
@@ -184,10 +190,21 @@ const App = () => {
     (current) => current.id === selectedSessionId,
   )
   const seasonSummary = buildSeasonSummary(normalizedData.sessions)
-  const leaderboard = buildPlayerAggregates(normalizedData.sessions)
-    .sort((a, b) => b.totalProfit - a.totalProfit)
-    .slice(0, 4)
+  const leaderboard = buildPlayerAggregates(normalizedData.sessions).sort(
+    (a, b) => b.totalProfit - a.totalProfit,
+  )
+  const topPerformer = leaderboard[0] ?? null
   const activeDashboardTab = activePage === 'profile' ? 'profiles' : activePage
+  const pageTitle =
+    activePage === 'profile'
+      ? selectedPlayerName
+        ? `${selectedPlayerName} profile`
+        : 'Player profile'
+      : pageTitles[activeDashboardTab]
+  const pageDescription =
+    activePage === 'profile'
+      ? 'Follow session-by-session profit and the running performance line.'
+      : pageDescriptions[activeDashboardTab]
 
   const updateSession = (updatedSession: Session) => {
     setData((prev) => ({
@@ -296,7 +313,7 @@ const App = () => {
       ) : (
         <div className="app dashboard-app">
           <header className="dashboard-header glass-panel">
-            <div className="dashboard-header-top">
+            <div className="dashboard-toolbar">
               <button
                 type="button"
                 className="brand-button"
@@ -304,128 +321,79 @@ const App = () => {
               >
                 Poker Tracker
               </button>
+              <nav className="dashboard-nav" aria-label="Dashboard pages">
+                <button
+                  type="button"
+                  className={activeDashboardTab === 'sessions' ? 'active' : ''}
+                  onClick={() => setActivePage('sessions')}
+                >
+                  Sessions
+                </button>
+                <button
+                  type="button"
+                  className={activeDashboardTab === 'stats' ? 'active' : ''}
+                  onClick={() => setActivePage('stats')}
+                >
+                  Statistics
+                </button>
+                <button
+                  type="button"
+                  className={activeDashboardTab === 'profiles' ? 'active' : ''}
+                  onClick={() => setActivePage('profiles')}
+                >
+                  Profiles
+                </button>
+              </nav>
               <div className="dashboard-header-actions">
-                {activePage === 'profile' ? (
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => setActivePage('profiles')}
-                  >
-                    Back to profiles
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setActivePage('profiles')}
+                >
+                  Go to profiles
+                </button>
                 <button
                   type="button"
                   className="ghost-button"
                   onClick={() => setAppView('landing')}
                 >
-                  Landing page
+                  Overview
                 </button>
               </div>
             </div>
 
-            <div className="dashboard-hero">
-              <div className="dashboard-copy">
-                <p className="eyebrow">League command center</p>
-                <h1>{pageTitles[activeDashboardTab]}</h1>
-                <p className="subtitle">
-                  {activeDashboardTab === 'sessions'
-                    ? 'Manage nights, adjust player results, and keep the ledger current.'
-                    : activeDashboardTab === 'stats'
-                      ? 'Follow the overall shape of the season, not just a single table.'
-                      : 'Open every player record with full context across the full run.'}
-                </p>
+            <div className="dashboard-header-copy">
+              <div>
+                <p className="eyebrow">Dashboard</p>
+                <h1>{pageTitle}</h1>
+                <p className="subtitle">{pageDescription}</p>
               </div>
-
-              <div className="dashboard-summary-grid">
-                <article className="summary-card">
-                  <div className="summary-card-top">
-                    <span className="summary-label">Net profit</span>
-                    <strong className="summary-card-value">
-                      {formatCurrency(seasonSummary.totalProfit)}
-                    </strong>
-                  </div>
-                  <p className="summary-card-meta">
-                    {formatPercent(seasonSummary.totalRoi)} ROI
-                  </p>
-                </article>
-                <article className="summary-card">
-                  <div className="summary-card-top">
-                    <span className="summary-label">Tracked entries</span>
-                    <strong className="summary-card-value">
-                      {seasonSummary.totalEntries}
-                    </strong>
-                  </div>
-                  <p className="summary-card-meta">
-                    {seasonSummary.uniquePlayers} unique players
-                  </p>
-                </article>
-                <article className="summary-card">
-                  <div className="summary-card-top">
-                    <span className="summary-label">Latest session</span>
-                    <strong className="summary-card-value">
-                      {seasonSummary.latestSession?.label ?? 'No sessions'}
-                    </strong>
-                  </div>
-                  <p className="summary-card-meta">
-                    {seasonSummary.latestSession
-                      ? `${seasonSummary.latestSession.playerCount} players`
-                      : 'Ready for the next table'}
-                  </p>
-                </article>
-              </div>
-
-              <aside className="dashboard-spotlight glass-panel">
-                <div>
-                  <p className="eyebrow">Top profit table</p>
-                  <h2>Current leaders</h2>
-                </div>
-                <div className="spotlight-list">
-                  {leaderboard.map((player, index) => (
-                    <button
-                      key={player.name}
-                      type="button"
-                      className="spotlight-row"
-                      onClick={() => {
-                        setSelectedPlayerName(player.name)
-                        setActivePage('profile')
-                      }}
-                    >
-                      <span className="spotlight-rank">0{index + 1}</span>
-                      <span>{player.name}</span>
-                      <span
-                        className={player.totalProfit >= 0 ? 'positive' : 'negative'}
-                      >
-                        {formatCurrency(player.totalProfit)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </aside>
             </div>
 
-            <div className="page-tabs dashboard-tabs">
-              <button
-                type="button"
-                className={activeDashboardTab === 'sessions' ? 'active' : ''}
-                onClick={() => setActivePage('sessions')}
-              >
-                Sessions
-              </button>
-              <button
-                type="button"
-                className={activeDashboardTab === 'stats' ? 'active' : ''}
-                onClick={() => setActivePage('stats')}
-              >
-                Statistics
-              </button>
-              <button
-                type="button"
-                className={activeDashboardTab === 'profiles' ? 'active' : ''}
-                onClick={() => setActivePage('profiles')}
-              >
-                Profiles
-              </button>
+            <div className="dashboard-summary-strip">
+              <article className="dashboard-summary-compact">
+                <span className="summary-label">Net profit</span>
+                <strong>{formatCurrency(seasonSummary.totalProfit)}</strong>
+                <p className="summary-card-meta">{formatPercent(seasonSummary.totalRoi)} ROI</p>
+              </article>
+              <article className="dashboard-summary-compact">
+                <span className="summary-label">Latest session</span>
+                <strong>{seasonSummary.latestSession?.label ?? 'No sessions'}</strong>
+                <p className="summary-card-meta">
+                  {seasonSummary.latestSession
+                    ? `${seasonSummary.latestSession.playerCount} players`
+                    : 'Start a new session anytime'}
+                </p>
+              </article>
+              <article className="dashboard-summary-compact">
+                <span className="summary-label">Top player</span>
+                <strong>{topPerformer?.name ?? 'No players'}</strong>
+                <p className="summary-card-meta">
+                  {topPerformer
+                    ? formatCurrency(topPerformer.totalProfit)
+                    : 'No profile data yet'}
+                </p>
+              </article>
             </div>
           </header>
 

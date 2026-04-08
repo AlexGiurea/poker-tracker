@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Session } from '../types/poker'
 import { buildPlayerAggregates, formatCurrency, formatPercent } from '../lib/analytics'
 
@@ -12,6 +13,7 @@ type PlayerSession = {
   paid: number
   chipValue: number
   profit: number
+  cumulativeProfit: number
 }
 
 const buildProfile = (sessions: Session[], name: string) => {
@@ -19,10 +21,15 @@ const buildProfile = (sessions: Session[], name: string) => {
 
   if (!profile) return null
 
+  let runningProfit = 0
+
   const sessionRows: PlayerSession[] = sessions.flatMap((session) => {
     const player = Object.values(session.players).find((entry) => entry.name === name)
 
     if (!player) return []
+
+    const profit = player.chipValue - player.paid
+    runningProfit += profit
 
     return [
       {
@@ -30,12 +37,48 @@ const buildProfile = (sessions: Session[], name: string) => {
         sessionLabel: session.label,
         paid: player.paid,
         chipValue: player.chipValue,
-        profit: player.chipValue - player.paid,
+        profit,
+        cumulativeProfit: runningProfit,
       },
     ]
   })
 
   return { profile, sessions: sessionRows }
+}
+
+const buildTrendChart = (sessions: PlayerSession[]) => {
+  const width = 760
+  const height = 260
+  const paddingX = 36
+  const paddingY = 28
+  const values = sessions.map((session) => session.cumulativeProfit)
+  const minValue = Math.min(0, ...values)
+  const maxValue = Math.max(0, ...values)
+  const range = Math.max(maxValue - minValue, 1)
+  const usableWidth = width - paddingX * 2
+  const usableHeight = height - paddingY * 2
+  const step = sessions.length > 1 ? usableWidth / (sessions.length - 1) : 0
+
+  const points = sessions.map((session, index) => {
+    const x = sessions.length === 1 ? width / 2 : paddingX + step * index
+    const y = paddingY + ((maxValue - session.cumulativeProfit) / range) * usableHeight
+    return {
+      ...session,
+      x,
+      y,
+    }
+  })
+
+  const zeroY = paddingY + ((maxValue - 0) / range) * usableHeight
+  const linePath = points.map((point) => `${point.x},${point.y}`).join(' ')
+
+  return {
+    width,
+    height,
+    zeroY,
+    points,
+    linePath,
+  }
 }
 
 const PlayerProfilePage = ({
@@ -56,6 +99,14 @@ const PlayerProfilePage = ({
   }
 
   const { profile, sessions: sessionRows } = result
+  const chart = buildTrendChart(sessionRows)
+  const [activeSessionId, setActiveSessionId] = useState(
+    sessionRows.at(-1)?.sessionId ?? '',
+  )
+  const activeSession =
+    sessionRows.find((session) => session.sessionId === activeSessionId) ??
+    sessionRows.at(-1) ??
+    null
 
   return (
     <div className="profile-page">
@@ -79,6 +130,108 @@ const PlayerProfilePage = ({
           </div>
         </div>
       </div>
+
+      {activeSession ? (
+        <section className="profile-trend glass-panel">
+          <div className="profile-trend-header">
+            <div>
+              <p className="eyebrow">Performance line</p>
+              <h3>Cumulative profit trend</h3>
+              <p className="subtitle">
+                Follow how {profile.name}&apos;s running profit changes from one session to the next.
+              </p>
+            </div>
+            <div className="profile-trend-focus">
+              <span className="profile-label">{activeSession.sessionLabel}</span>
+              <strong
+                className={activeSession.profit >= 0 ? 'positive' : 'negative'}
+              >
+                {formatCurrency(activeSession.profit)}
+              </strong>
+              <p className="subtitle">
+                Running total {formatCurrency(activeSession.cumulativeProfit)}
+              </p>
+            </div>
+          </div>
+
+          <div className="profile-trend-chart">
+            <svg
+              viewBox={`0 0 ${chart.width} ${chart.height}`}
+              role="img"
+              aria-label={`${profile.name} cumulative profit trend`}
+            >
+              <line
+                className="profile-trend-zero"
+                x1="0"
+                y1={chart.zeroY}
+                x2={chart.width}
+                y2={chart.zeroY}
+              />
+              <polyline
+                className="profile-trend-line"
+                points={chart.linePath}
+              />
+              {chart.points.map((point) => (
+                <g key={point.sessionId}>
+                  {point.sessionId === activeSession.sessionId ? (
+                    <line
+                      className="profile-trend-guide"
+                      x1={point.x}
+                      y1="0"
+                      x2={point.x}
+                      y2={chart.height}
+                    />
+                  ) : null}
+                  <circle
+                    className={`profile-trend-point ${
+                      point.sessionId === activeSession.sessionId ? 'active' : ''
+                    }`}
+                    cx={point.x}
+                    cy={point.y}
+                    r={point.sessionId === activeSession.sessionId ? 8 : 6}
+                    onMouseEnter={() => setActiveSessionId(point.sessionId)}
+                    onClick={() => setActiveSessionId(point.sessionId)}
+                  />
+                </g>
+              ))}
+            </svg>
+          </div>
+
+          <div className="profile-trend-metrics">
+            <article className="profile-trend-metric">
+              <span className="profile-label">Session result</span>
+              <strong className={activeSession.profit >= 0 ? 'positive' : 'negative'}>
+                {formatCurrency(activeSession.profit)}
+              </strong>
+            </article>
+            <article className="profile-trend-metric">
+              <span className="profile-label">Running total</span>
+              <strong>{formatCurrency(activeSession.cumulativeProfit)}</strong>
+            </article>
+            <article className="profile-trend-metric">
+              <span className="profile-label">Buy-in / cash-out</span>
+              <strong>
+                {formatCurrency(activeSession.paid)} / {formatCurrency(activeSession.chipValue)}
+              </strong>
+            </article>
+          </div>
+
+          <div className="profile-trend-sessions">
+            {sessionRows.map((session) => (
+              <button
+                key={session.sessionId}
+                type="button"
+                className={`profile-trend-session ${
+                  session.sessionId === activeSession.sessionId ? 'active' : ''
+                }`}
+                onClick={() => setActiveSessionId(session.sessionId)}
+              >
+                {session.sessionLabel}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="profile-kpis">
         <div className="stat-card">
