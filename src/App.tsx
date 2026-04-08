@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import Board from './components/Board'
 import ChatbotWidget from './components/ChatbotWidget'
@@ -8,7 +8,7 @@ import ProfilesBoard from './components/ProfilesBoard'
 import StatsBoard from './components/StatsBoard'
 import { seedData } from './data/seed'
 import { buildPlayerAggregates, buildSeasonSummary, formatCurrency, formatPercent } from './lib/analytics'
-import { readSharedProfileFromSearch } from './lib/sharedProfiles'
+import { resolveSharedProfile } from './lib/sharedProfiles'
 import type { BoardData, Player, Session } from './types/poker'
 
 type DashboardPage = 'sessions' | 'stats' | 'profiles' | 'profile'
@@ -132,14 +132,14 @@ const pageDescriptions: Record<Exclude<DashboardPage, 'profile'>, string> = {
 }
 
 const App = () => {
-  const [sharedProfile, setSharedProfile] = useState(() => {
-    if (typeof window === 'undefined') return null
-    return readSharedProfileFromSearch(window.location.search)
-  })
   const [data, setData] = useState<BoardData>(() =>
     normalizeBoardData(seedData),
   )
   const normalizedData = normalizeBoardData(data)
+  const [locationState, setLocationState] = useState(() => ({
+    pathname: typeof window === 'undefined' ? '/' : window.location.pathname,
+    search: typeof window === 'undefined' ? '' : window.location.search,
+  }))
   const [appView, setAppView] = useState<'landing' | 'dashboard'>('landing')
   const [activePage, setActivePage] = useState<DashboardPage>('stats')
   const [selectedSessionId, setSelectedSessionId] = useState(
@@ -178,12 +178,15 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    const syncSharedProfile = () => {
-      setSharedProfile(readSharedProfileFromSearch(window.location.search))
+    const syncLocationState = () => {
+      setLocationState({
+        pathname: window.location.pathname,
+        search: window.location.search,
+      })
     }
 
-    window.addEventListener('popstate', syncSharedProfile)
-    return () => window.removeEventListener('popstate', syncSharedProfile)
+    window.addEventListener('popstate', syncLocationState)
+    return () => window.removeEventListener('popstate', syncLocationState)
   }, [])
 
   useEffect(() => {
@@ -222,6 +225,15 @@ const App = () => {
 
   const session = normalizedData.sessions.find(
     (current) => current.id === selectedSessionId,
+  )
+  const sharedProfileRoute = useMemo(
+    () =>
+      resolveSharedProfile(
+        locationState.pathname,
+        locationState.search,
+        normalizedData.sessions,
+      ),
+    [locationState.pathname, locationState.search, normalizedData.sessions],
   )
   const seasonSummary = buildSeasonSummary(normalizedData.sessions)
   const leaderboard = buildPlayerAggregates(normalizedData.sessions).sort(
@@ -332,7 +344,7 @@ const App = () => {
     setActivePage(page)
   }
 
-  if (sharedProfile) {
+  if (sharedProfileRoute.isSharedRoute) {
     return (
       <div className="app-shell">
         <div className="depth-grid" />
@@ -347,13 +359,13 @@ const App = () => {
               <p className="eyebrow">Poker Tracker</p>
               <h1>Shared player profile</h1>
               <p className="subtitle">
-                This link contains only the single profile snapshot that was shared with you.
+                This link opens only the shared player profile.
               </p>
             </div>
           </header>
 
           <PlayerProfilePage
-            profileSnapshot={sharedProfile}
+            profileSnapshot={sharedProfileRoute.profile}
             sharedMode
           />
         </div>

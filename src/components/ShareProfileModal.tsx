@@ -51,9 +51,8 @@ const ShareProfileModal = ({
   const handleWhatsappShare = () => {
     if (!shareUrl) return
 
-    const message = `Here is your Poker Tracker profile: ${shareUrl}`
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(message)}`,
+      `https://wa.me/?text=${encodeURIComponent(shareUrl)}`,
       '_blank',
       'noopener,noreferrer',
     )
@@ -77,7 +76,7 @@ const ShareProfileModal = ({
             <p className="eyebrow">Share profile</p>
             <h3 id="share-modal-title">{snapshot.name}</h3>
             <p className="subtitle">
-              Send a read-only snapshot with link copy or WhatsApp.
+              Send a read-only player link with copy or WhatsApp.
             </p>
           </div>
           <button

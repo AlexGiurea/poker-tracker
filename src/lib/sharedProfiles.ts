@@ -1,5 +1,6 @@
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
-import type { PlayerProfileSnapshot } from './playerProfiles'
+import { decompressFromEncodedURIComponent } from 'lz-string'
+import type { Session } from '../types/poker'
+import { buildPlayerProfile, type PlayerProfileSnapshot } from './playerProfiles'
 
 type SharedSessionEntry = [label: string, paidCents: number, chipValueCents: number]
 
@@ -10,21 +11,9 @@ type SharedProfilePayload = {
 }
 
 const SHARED_PROFILE_PARAM = 's'
+const SHARED_PROFILE_PATH_PREFIX = '/p/'
 
-const toCents = (value: number) => Math.round(value * 100)
 const fromCents = (value: number) => value / 100
-
-const toCompactPayload = (
-  snapshot: PlayerProfileSnapshot,
-): SharedProfilePayload => ({
-  version: 1,
-  name: snapshot.name,
-  sessions: snapshot.sessions.map((session) => [
-    session.sessionLabel,
-    toCents(session.paid),
-    toCents(session.chipValue),
-  ]),
-})
 
 const toSnapshot = (payload: SharedProfilePayload): PlayerProfileSnapshot => {
   let runningProfit = 0
@@ -75,13 +64,8 @@ const toSnapshot = (payload: SharedProfilePayload): PlayerProfileSnapshot => {
 }
 
 export const buildSharedProfileUrl = (snapshot: PlayerProfileSnapshot) => {
-  const payload = toCompactPayload(snapshot)
-  const url = new URL(window.location.origin + window.location.pathname)
-  url.searchParams.set(
-    SHARED_PROFILE_PARAM,
-    compressToEncodedURIComponent(JSON.stringify(payload)),
-  )
-  return url.toString()
+  const slug = encodeURIComponent(toPlayerSlug(snapshot.name))
+  return new URL(`${SHARED_PROFILE_PATH_PREFIX}${slug}`, window.location.origin).toString()
 }
 
 export const readSharedProfileFromSearch = (search: string) => {
@@ -104,5 +88,55 @@ export const readSharedProfileFromSearch = (search: string) => {
     return toSnapshot(parsed)
   } catch {
     return null
+  }
+}
+
+export const toPlayerSlug = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
+const getSharedPathSlug = (pathname: string) => {
+  if (!pathname.startsWith(SHARED_PROFILE_PATH_PREFIX)) {
+    return null
+  }
+
+  const rawSlug = pathname.slice(SHARED_PROFILE_PATH_PREFIX.length).split('/')[0]
+  return rawSlug ? decodeURIComponent(rawSlug) : null
+}
+
+const findPlayerNameBySlug = (sessions: Session[], slug: string) => {
+  const uniqueNames = [
+    ...new Set(
+      sessions.flatMap((session) =>
+        Object.values(session.players).map((player) => player.name),
+      ),
+    ),
+  ]
+
+  return uniqueNames.find((name) => toPlayerSlug(name) === slug) ?? null
+}
+
+export const resolveSharedProfile = (
+  pathname: string,
+  search: string,
+  sessions: Session[],
+) => {
+  const pathSlug = getSharedPathSlug(pathname)
+
+  if (pathSlug) {
+    const playerName = findPlayerNameBySlug(sessions, pathSlug)
+    return {
+      isSharedRoute: true,
+      profile: playerName ? buildPlayerProfile(sessions, playerName) : null,
+    }
+  }
+
+  const sharedProfile = readSharedProfileFromSearch(search)
+  return {
+    isSharedRoute: Boolean(sharedProfile),
+    profile: sharedProfile,
   }
 }

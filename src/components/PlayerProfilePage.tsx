@@ -102,7 +102,7 @@ const PlayerProfilePage = ({
               <h2>{profile.name}</h2>
               <p className="subtitle">
                 {sharedMode
-                  ? 'Read-only performance snapshot'
+                  ? 'Read-only shared profile'
                   : 'Lifetime performance overview'}
               </p>
             </div>
