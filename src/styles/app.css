@@ -543,8 +543,7 @@ h3,
 .summary-card strong {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
-  text-shadow: 0 0 20px rgba(78, 230, 255, 0.3);
-  animation: number-flare 7s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(78, 230, 255, 0.12);
 }
 
 .floating-pill {
@@ -677,8 +676,7 @@ h3,
   font-size: clamp(2.8rem, 4vw, 4.4rem);
   line-height: 0.9;
   letter-spacing: -0.05em;
-  text-shadow: 0 0 18px rgba(78, 230, 255, 0.25);
-  animation: number-flare 7s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(78, 230, 255, 0.12);
 }
 
 .summary-card-meta {
@@ -796,8 +794,7 @@ select:focus {
   font-size: 1.7rem;
   font-weight: 800;
   font-family: 'Space Grotesk', sans-serif;
-  text-shadow: 0 0 14px rgba(78, 230, 255, 0.22);
-  animation: number-flare 6s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(78, 230, 255, 0.1);
 }
 
 .stat-wheel {
@@ -985,23 +982,30 @@ select:focus {
 .dashboard-back-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  border-radius: 999px;
+  gap: 0.55rem;
+  border-radius: 16px;
   border: 1px solid var(--line);
-  padding: 0.82rem 1.15rem;
-  background: rgba(6, 16, 25, 0.62);
+  padding: 0.65rem 0.9rem;
+  background: rgba(6, 16, 25, 0.46);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .dashboard-back-button span:first-child {
-  width: 2rem;
-  height: 2rem;
+  width: 1.65rem;
+  height: 1.65rem;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: rgba(78, 230, 255, 0.12);
-  color: var(--accent-strong);
-  font-size: 1rem;
-  box-shadow: inset 0 0 0 1px rgba(78, 230, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.dashboard-back-button span:last-child {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .dashboard-nav {
@@ -1030,6 +1034,7 @@ select:focus {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(1.5rem, 2.6vw, 2.4rem);
   line-height: 1;
+  text-shadow: 0 0 6px rgba(78, 230, 255, 0.08);
 }
 
 .landing-summary-grid {
@@ -1125,6 +1130,7 @@ select:focus {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 0.95;
+  text-shadow: 0 0 10px rgba(78, 230, 255, 0.1);
 }
 
 .profile-trend {
@@ -1151,6 +1157,7 @@ select:focus {
 .profile-trend-metric strong {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.6rem;
+  text-shadow: 0 0 6px rgba(78, 230, 255, 0.08);
 }
 
 .profile-trend-chart {
@@ -1429,8 +1436,8 @@ select:focus {
 }
 
 @keyframes number-flare {
-  0%, 100% { text-shadow: 0 0 16px rgba(78, 230, 255, 0.28); }
-  50%       { text-shadow: 0 0 24px rgba(78, 230, 255, 0.4), 0 0 50px rgba(78, 230, 255, 0.12); }
+  0%, 100% { text-shadow: 0 0 8px rgba(78, 230, 255, 0.12); }
+  50%       { text-shadow: 0 0 12px rgba(78, 230, 255, 0.18); }
 }
 
 @keyframes grid-scroll {
@@ -1532,11 +1539,11 @@ select:focus {
 
 /* Glowing positive/negative values */
 .positive {
-  text-shadow: 0 0 16px rgba(116, 240, 167, 0.5);
+  text-shadow: 0 0 8px rgba(116, 240, 167, 0.18);
 }
 
 .negative {
-  text-shadow: 0 0 16px rgba(255, 126, 145, 0.5);
+  text-shadow: 0 0 8px rgba(255, 126, 145, 0.18);
 }
 
 /* Brand mark glow */
