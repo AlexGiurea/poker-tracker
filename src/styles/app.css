@@ -315,6 +315,7 @@ h3,
 .chatbot-toggle,
 .chatbot-history-new,
 .brand-button,
+.dashboard-back-button,
 .chatbot-action,
 .chatbot-close {
   background: rgba(6, 16, 25, 0.62);
@@ -328,12 +329,14 @@ h3,
 
 .ghost-button:hover,
 .page-tabs button:hover,
+.dashboard-nav button:hover,
 .session-tabs button:hover,
 .stat-toggle button:hover,
 .chatbot-input button:hover,
 .chatbot-toggle:hover,
 .chatbot-history-new:hover,
 .brand-button:hover,
+.dashboard-back-button:hover,
 .profile-link:hover {
   transform: translateY(-1px);
   border-color: rgba(78, 230, 255, 0.28);
@@ -979,6 +982,28 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.dashboard-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 0.82rem 1.15rem;
+  background: rgba(6, 16, 25, 0.62);
+}
+
+.dashboard-back-button span:first-child {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(78, 230, 255, 0.12);
+  color: var(--accent-strong);
+  font-size: 1rem;
+  box-shadow: inset 0 0 0 1px rgba(78, 230, 255, 0.18);
+}
+
 .dashboard-nav {
   flex: 1 1 auto;
   justify-content: center;
@@ -1572,7 +1597,7 @@ select:focus {
   .landing-nav-actions .primary-button,
   .landing-nav-actions .ghost-button,
   .dashboard-nav button,
-  .dashboard-header-actions .ghost-button {
+  .dashboard-back-button {
     flex: 1 1 12rem;
     justify-content: center;
   }
