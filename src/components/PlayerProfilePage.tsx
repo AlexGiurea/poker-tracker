@@ -6,6 +6,7 @@ import {
   type PlayerProfileSnapshot,
   type PlayerSessionRow,
 } from '../lib/playerProfiles'
+import ShareProfileModal from './ShareProfileModal'
 
 type PlayerProfilePageProps = {
   sessions?: Session[]
@@ -59,6 +60,7 @@ const PlayerProfilePage = ({
   const sessionRows = profile?.sessions ?? []
   const latestSessionId = sessionRows.at(-1)?.sessionId ?? ''
   const [activeSessionId, setActiveSessionId] = useState(latestSessionId)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
 
   useEffect(() => {
     setActiveSessionId(latestSessionId)
@@ -110,6 +112,15 @@ const PlayerProfilePage = ({
             <strong className={profile.totalProfit >= 0 ? 'positive' : 'negative'}>
               {formatCurrency(profile.totalProfit)}
             </strong>
+            {!sharedMode ? (
+              <button
+                type="button"
+                className="ghost-button profile-page-share-button"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                Share profile
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -291,6 +302,12 @@ const PlayerProfilePage = ({
           ))}
         </div>
       </section>
+
+      <ShareProfileModal
+        isOpen={isShareModalOpen}
+        snapshot={profile}
+        onClose={() => setIsShareModalOpen(false)}
+      />
     </div>
   )
 }

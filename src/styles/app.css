@@ -913,30 +913,16 @@ select:focus {
   align-items: flex-start;
 }
 
-.profile-share-group {
-  position: relative;
-}
-
-.profile-share-button {
-  padding: 0.64rem 1rem;
-}
-
-.profile-share-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  min-width: 12rem;
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
+.profile-card-header-actions {
   display: grid;
-  gap: 12px;
-  z-index: 3;
+  justify-items: end;
+  gap: 10px;
 }
 
-.share-feedback {
-  margin: 0;
-  color: var(--accent);
-  font-size: 0.9rem;
+.profile-share-trigger,
+.profile-page-share-button,
+.share-modal-close {
+  padding: 0.64rem 1rem;
 }
 
 .player-card-fields {
@@ -1174,6 +1160,51 @@ select:focus {
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 0.95;
   text-shadow: 0 0 10px rgba(78, 230, 255, 0.1);
+}
+
+.profile-page-share-button {
+  margin-top: 8px;
+}
+
+.share-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 8, 15, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.share-modal {
+  width: min(560px, 100%);
+  padding: 30px;
+  display: grid;
+  gap: 22px;
+  overflow: visible;
+}
+
+.share-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.share-modal-field {
+  gap: 12px;
+}
+
+.share-modal-field input {
+  font-size: 0.96rem;
+}
+
+.share-modal-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .profile-trend {
@@ -1705,7 +1736,8 @@ select:focus {
   .player-card-header,
   .profile-session-row,
   .profile-hero,
-  .profile-trend-header {
+  .profile-trend-header,
+  .share-modal-header {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -1731,6 +1763,21 @@ select:focus {
     width: calc(100vw - 24px);
     max-width: none;
     border-radius: 20px;
+  }
+
+  .share-modal {
+    padding: 24px;
+  }
+
+  .share-modal-actions {
+    width: 100%;
+  }
+
+  .share-modal-actions .primary-button,
+  .share-modal-actions .ghost-button,
+  .share-modal-close {
+    width: 100%;
+    justify-content: center;
   }
 
   .chatbot-message {
