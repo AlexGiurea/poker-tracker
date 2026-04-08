@@ -58,21 +58,9 @@ const ProfilesBoard = ({
                       <div>
                         <h3>{player.name}</h3>
                       </div>
-                      <div className="profile-card-header-actions">
-                        <span className={player.totalProfit >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(player.totalProfit)}
-                        </span>
-                        <button
-                          type="button"
-                          className="ghost-button profile-share-trigger"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setSharePlayerName(player.name)
-                          }}
-                        >
-                          Share
-                        </button>
-                      </div>
+                      <span className={player.totalProfit >= 0 ? 'positive' : 'negative'}>
+                        {formatCurrency(player.totalProfit)}
+                      </span>
                     </div>
                     <div className="profile-stats">
                       <div>
@@ -107,6 +95,16 @@ const ProfilesBoard = ({
                         }}
                       >
                         View profile
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button profile-card-cta profile-card-share"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setSharePlayerName(player.name)
+                        }}
+                      >
+                        Share
                       </button>
                     </div>
                   </article>

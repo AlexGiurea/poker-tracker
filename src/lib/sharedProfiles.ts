@@ -1,44 +1,85 @@
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import type { PlayerProfileSnapshot } from './playerProfiles'
+
+type SharedSessionEntry = [label: string, paidCents: number, chipValueCents: number]
 
 type SharedProfilePayload = {
   version: 1
-  snapshot: PlayerProfileSnapshot
+  name: string
+  sessions: SharedSessionEntry[]
 }
 
-const SHARED_PROFILE_PARAM = 'shared'
+const SHARED_PROFILE_PARAM = 's'
 
-const encodeBase64Url = (input: string) => {
-  const bytes = new TextEncoder().encode(input)
-  let binary = ''
+const toCents = (value: number) => Math.round(value * 100)
+const fromCents = (value: number) => value / 100
 
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte)
+const toCompactPayload = (
+  snapshot: PlayerProfileSnapshot,
+): SharedProfilePayload => ({
+  version: 1,
+  name: snapshot.name,
+  sessions: snapshot.sessions.map((session) => [
+    session.sessionLabel,
+    toCents(session.paid),
+    toCents(session.chipValue),
+  ]),
+})
+
+const toSnapshot = (payload: SharedProfilePayload): PlayerProfileSnapshot => {
+  let runningProfit = 0
+
+  const sessions = payload.sessions.map(([sessionLabel, paidCents, chipValueCents], index) => {
+    const paid = fromCents(paidCents)
+    const chipValue = fromCents(chipValueCents)
+    const profit = chipValue - paid
+    runningProfit += profit
+
+    return {
+      sessionId: `shared-${index + 1}`,
+      sessionLabel,
+      paid,
+      chipValue,
+      profit,
+      cumulativeProfit: runningProfit,
+    }
   })
 
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '')
-}
+  const totalPaid = sessions.reduce((sum, session) => sum + session.paid, 0)
+  const totalChipValue = sessions.reduce((sum, session) => sum + session.chipValue, 0)
+  const totalProfit = totalChipValue - totalPaid
+  const sessionsPlayed = sessions.length
+  const averageProfit = sessionsPlayed > 0 ? totalProfit / sessionsPlayed : 0
+  const averagePaid = sessionsPlayed > 0 ? totalPaid / sessionsPlayed : 0
+  const bestSessionProfit = sessionsPlayed > 0
+    ? Math.max(...sessions.map((session) => session.profit))
+    : 0
+  const worstSessionProfit = sessionsPlayed > 0
+    ? Math.min(...sessions.map((session) => session.profit))
+    : 0
+  const roi = totalPaid > 0 ? totalProfit / totalPaid : 0
 
-const decodeBase64Url = (input: string) => {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padding = normalized.length % 4
-  const padded = padding === 0 ? normalized : `${normalized}${'='.repeat(4 - padding)}`
-  const binary = atob(padded)
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
-  return new TextDecoder().decode(bytes)
+  return {
+    name: payload.name,
+    totalProfit,
+    sessionsPlayed,
+    totalPaid,
+    totalChipValue,
+    averageProfit,
+    bestSessionProfit,
+    worstSessionProfit,
+    roi,
+    averagePaid,
+    sessions,
+  }
 }
 
 export const buildSharedProfileUrl = (snapshot: PlayerProfileSnapshot) => {
-  const payload: SharedProfilePayload = {
-    version: 1,
-    snapshot,
-  }
-  const url = new URL(window.location.href)
+  const payload = toCompactPayload(snapshot)
+  const url = new URL(window.location.origin + window.location.pathname)
   url.searchParams.set(
     SHARED_PROFILE_PARAM,
-    encodeBase64Url(JSON.stringify(payload)),
+    compressToEncodedURIComponent(JSON.stringify(payload)),
   )
   return url.toString()
 }
@@ -50,13 +91,17 @@ export const readSharedProfileFromSearch = (search: string) => {
   if (!encoded) return null
 
   try {
-    const parsed = JSON.parse(decodeBase64Url(encoded)) as SharedProfilePayload
+    const decoded = decompressFromEncodedURIComponent(encoded)
 
-    if (parsed.version !== 1 || !parsed.snapshot?.name) {
+    if (!decoded) return null
+
+    const parsed = JSON.parse(decoded) as SharedProfilePayload
+
+    if (parsed.version !== 1 || !parsed.name || !Array.isArray(parsed.sessions)) {
       return null
     }
 
-    return parsed.snapshot
+    return toSnapshot(parsed)
   } catch {
     return null
   }

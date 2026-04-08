@@ -911,18 +911,20 @@ select:focus {
 
 .profile-actions {
   align-items: flex-start;
-}
-
-.profile-card-header-actions {
-  display: grid;
-  justify-items: end;
-  gap: 10px;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .profile-share-trigger,
 .profile-page-share-button,
 .share-modal-close {
   padding: 0.64rem 1rem;
+}
+
+.profile-card-share,
+.profile-card-cta {
+  width: 100%;
+  justify-content: center;
 }
 
 .player-card-fields {
@@ -1191,6 +1193,11 @@ select:focus {
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+}
+
+.share-modal-close {
+  min-width: 7rem;
+  justify-content: center;
 }
 
 .share-modal-field {

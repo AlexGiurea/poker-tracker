@@ -82,7 +82,7 @@ const ShareProfileModal = ({
           </div>
           <button
             type="button"
-            className="share-modal-close"
+            className="ghost-button share-modal-close"
             onClick={onClose}
             aria-label="Close share dialog"
           >
