@@ -1,52 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Session } from '../types/poker'
-import { buildPlayerAggregates, formatCurrency, formatPercent } from '../lib/analytics'
+import { formatCurrency, formatPercent } from '../lib/analytics'
+import {
+  buildPlayerProfile,
+  type PlayerProfileSnapshot,
+  type PlayerSessionRow,
+} from '../lib/playerProfiles'
 
 type PlayerProfilePageProps = {
-  sessions: Session[]
-  playerName: string
+  sessions?: Session[]
+  playerName?: string
+  profileSnapshot?: PlayerProfileSnapshot | null
+  sharedMode?: boolean
 }
 
-type PlayerSession = {
-  sessionId: string
-  sessionLabel: string
-  paid: number
-  chipValue: number
-  profit: number
-  cumulativeProfit: number
-}
-
-const buildProfile = (sessions: Session[], name: string) => {
-  const profile = buildPlayerAggregates(sessions).find((player) => player.name === name)
-
-  if (!profile) return null
-
-  let runningProfit = 0
-
-  const sessionRows: PlayerSession[] = sessions.flatMap((session) => {
-    const player = Object.values(session.players).find((entry) => entry.name === name)
-
-    if (!player) return []
-
-    const profit = player.chipValue - player.paid
-    runningProfit += profit
-
-    return [
-      {
-        sessionId: session.id,
-        sessionLabel: session.label,
-        paid: player.paid,
-        chipValue: player.chipValue,
-        profit,
-        cumulativeProfit: runningProfit,
-      },
-    ]
-  })
-
-  return { profile, sessions: sessionRows }
-}
-
-const buildTrendChart = (sessions: PlayerSession[]) => {
+const buildTrendChart = (sessions: PlayerSessionRow[]) => {
   const width = 760
   const height = 260
   const paddingX = 36
@@ -82,27 +50,36 @@ const buildTrendChart = (sessions: PlayerSession[]) => {
 }
 
 const PlayerProfilePage = ({
-  sessions,
-  playerName,
+  sessions = [],
+  playerName = '',
+  profileSnapshot,
+  sharedMode = false,
 }: PlayerProfilePageProps) => {
-  const result = buildProfile(sessions, playerName)
+  const profile = profileSnapshot ?? buildPlayerProfile(sessions, playerName)
+  const sessionRows = profile?.sessions ?? []
+  const latestSessionId = sessionRows.at(-1)?.sessionId ?? ''
+  const [activeSessionId, setActiveSessionId] = useState(latestSessionId)
 
-  if (!result) {
+  useEffect(() => {
+    setActiveSessionId(latestSessionId)
+  }, [latestSessionId, profile?.name])
+
+  if (!profile) {
     return (
       <div className="profile-page">
         <div className="profile-page-header glass-panel">
           <h2>Profile not found</h2>
-          <p className="subtitle">Select a player to view their stats.</p>
+          <p className="subtitle">
+            {sharedMode
+              ? 'This shared profile link is invalid or incomplete.'
+              : 'Select a player to view their stats.'}
+          </p>
         </div>
       </div>
     )
   }
 
-  const { profile, sessions: sessionRows } = result
   const chart = buildTrendChart(sessionRows)
-  const [activeSessionId, setActiveSessionId] = useState(
-    sessionRows.at(-1)?.sessionId ?? '',
-  )
   const activeSession =
     sessionRows.find((session) => session.sessionId === activeSessionId) ??
     sessionRows.at(-1) ??
@@ -117,9 +94,15 @@ const PlayerProfilePage = ({
               <span>{profile.name.charAt(0).toUpperCase()}</span>
             </div>
             <div>
-              <p className="profile-label">Player profile</p>
+              <p className="profile-label">
+                {sharedMode ? 'Shared player profile' : 'Player profile'}
+              </p>
               <h2>{profile.name}</h2>
-              <p className="subtitle">Lifetime performance overview</p>
+              <p className="subtitle">
+                {sharedMode
+                  ? 'Read-only performance snapshot'
+                  : 'Lifetime performance overview'}
+              </p>
             </div>
           </div>
           <div className="profile-profit">
@@ -280,7 +263,11 @@ const PlayerProfilePage = ({
         <div className="column-header">
           <div>
             <h3>Session history</h3>
-            <p>Performance across each tracked day</p>
+            <p>
+              {sharedMode
+                ? 'Performance included in this shared snapshot'
+                : 'Performance across each tracked day'}
+            </p>
           </div>
         </div>
         <div className="profile-session-list">

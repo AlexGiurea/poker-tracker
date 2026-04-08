@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
 import type { Session } from '../types/poker'
 import { buildPlayerAggregates, formatCurrency, formatPercent } from '../lib/analytics'
+import { buildPlayerProfile } from '../lib/playerProfiles'
+import { buildSharedProfileUrl } from '../lib/sharedProfiles'
 
 type ProfilesBoardProps = {
   sessions: Session[]
@@ -14,6 +17,8 @@ const ProfilesBoard = ({
   onSelectPlayer,
   onOpenProfile,
 }: ProfilesBoardProps) => {
+  const [openShareMenuFor, setOpenShareMenuFor] = useState<string | null>(null)
+  const [copyFeedbackFor, setCopyFeedbackFor] = useState<string | null>(null)
   const players = buildPlayerAggregates(sessions)
   const sortedPlayers = [...players].sort(
     (a, b) => b.totalProfit - a.totalProfit,
@@ -23,14 +28,57 @@ const ProfilesBoard = ({
     sortedPlayers[0] ??
     null
 
+  useEffect(() => {
+    if (!copyFeedbackFor) return
+
+    const timeoutId = window.setTimeout(() => {
+      setCopyFeedbackFor(null)
+    }, 2200)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [copyFeedbackFor])
+
+  const getShareUrl = (playerName: string) => {
+    const snapshot = buildPlayerProfile(sessions, playerName)
+    return snapshot ? buildSharedProfileUrl(snapshot) : null
+  }
+
+  const handleCopyLink = async (playerName: string) => {
+    const shareUrl = getShareUrl(playerName)
+
+    if (!shareUrl) return
+
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopyFeedbackFor(playerName)
+      setOpenShareMenuFor(null)
+    } catch {
+      window.prompt('Copy this profile link', shareUrl)
+    }
+  }
+
+  const handleWhatsappShare = (playerName: string) => {
+    const shareUrl = getShareUrl(playerName)
+
+    if (!shareUrl) return
+
+    const message = `Here is your Poker Tracker profile: ${shareUrl}`
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+    setOpenShareMenuFor(null)
+  }
+
   return (
     <div className="board">
       <section className="column glass-panel">
         <div className="column-header">
           <div>
             <p className="eyebrow">Profiles</p>
-            <h2>Open any player profile</h2>
-            <p>One click opens the full page with stats, session history, and trend line.</p>
+            <h2>Open or share any player profile</h2>
+            <p>Use Share to send a read-only snapshot by link or WhatsApp.</p>
           </div>
         </div>
         {players.length === 0 ? (
@@ -43,6 +91,7 @@ const ProfilesBoard = ({
                 <article
                   key={player.name}
                   className={`profile-card glass-panel ${isSelected ? 'selected' : ''}`}
+                  onClick={() => onSelectPlayer?.(player.name)}
                 >
                   <div className="profile-header">
                     <h3>{player.name}</h3>
@@ -83,7 +132,41 @@ const ProfilesBoard = ({
                     >
                       View profile
                     </button>
+                    <div className="profile-share-group">
+                      <button
+                        type="button"
+                        className="ghost-button profile-share-button"
+                        onClick={() =>
+                          setOpenShareMenuFor((current) =>
+                            current === player.name ? null : player.name,
+                          )
+                        }
+                      >
+                        Share
+                      </button>
+                      {openShareMenuFor === player.name ? (
+                        <div className="profile-share-menu glass-panel">
+                          <button
+                            type="button"
+                            className="profile-link"
+                            onClick={() => void handleCopyLink(player.name)}
+                          >
+                            Copy link
+                          </button>
+                          <button
+                            type="button"
+                            className="profile-link"
+                            onClick={() => handleWhatsappShare(player.name)}
+                          >
+                            Share to WhatsApp
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
+                  {copyFeedbackFor === player.name ? (
+                    <p className="share-feedback">Link copied.</p>
+                  ) : null}
                 </article>
               )
             })}

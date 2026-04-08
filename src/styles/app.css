@@ -909,6 +909,36 @@ select:focus {
   text-align: left;
 }
 
+.profile-actions {
+  align-items: flex-start;
+}
+
+.profile-share-group {
+  position: relative;
+}
+
+.profile-share-button {
+  padding: 0.64rem 1rem;
+}
+
+.profile-share-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 12rem;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 12px;
+  z-index: 3;
+}
+
+.share-feedback {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
 .player-card-fields {
   display: grid;
   gap: 18px;
@@ -968,6 +998,19 @@ select:focus {
 .profile-page {
   display: grid;
   gap: 38px;
+}
+
+.shared-profile-app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 38px;
+  width: min(1380px, 100%);
+  margin: 0 auto;
+}
+
+.shared-profile-header {
+  padding: 38px;
 }
 
 .dashboard-toolbar,

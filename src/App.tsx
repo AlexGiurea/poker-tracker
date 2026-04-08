@@ -8,6 +8,7 @@ import ProfilesBoard from './components/ProfilesBoard'
 import StatsBoard from './components/StatsBoard'
 import { seedData } from './data/seed'
 import { buildPlayerAggregates, buildSeasonSummary, formatCurrency, formatPercent } from './lib/analytics'
+import { readSharedProfileFromSearch } from './lib/sharedProfiles'
 import type { BoardData, Player, Session } from './types/poker'
 
 type DashboardPage = 'sessions' | 'stats' | 'profiles' | 'profile'
@@ -131,6 +132,10 @@ const pageDescriptions: Record<Exclude<DashboardPage, 'profile'>, string> = {
 }
 
 const App = () => {
+  const [sharedProfile, setSharedProfile] = useState(() => {
+    if (typeof window === 'undefined') return null
+    return readSharedProfileFromSearch(window.location.search)
+  })
   const [data, setData] = useState<BoardData>(() =>
     normalizeBoardData(seedData),
   )
@@ -170,6 +175,15 @@ const App = () => {
       window.removeEventListener('mousemove', onMove)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
+  }, [])
+
+  useEffect(() => {
+    const syncSharedProfile = () => {
+      setSharedProfile(readSharedProfileFromSearch(window.location.search))
+    }
+
+    window.addEventListener('popstate', syncSharedProfile)
+    return () => window.removeEventListener('popstate', syncSharedProfile)
   }, [])
 
   useEffect(() => {
@@ -316,6 +330,35 @@ const App = () => {
     shouldScrollToContentRef.current = page === 'profiles'
     setAppView('dashboard')
     setActivePage(page)
+  }
+
+  if (sharedProfile) {
+    return (
+      <div className="app-shell">
+        <div className="depth-grid" />
+        <div className="ambient ambient-a" />
+        <div className="ambient ambient-b" />
+        <div className="ambient ambient-c" />
+        <div className="ambient ambient-d" />
+
+        <div className="app shared-profile-app">
+          <header className="dashboard-header glass-panel shared-profile-header">
+            <div className="dashboard-copy">
+              <p className="eyebrow">Poker Tracker</p>
+              <h1>Shared player profile</h1>
+              <p className="subtitle">
+                This link contains only the single profile snapshot that was shared with you.
+              </p>
+            </div>
+          </header>
+
+          <PlayerProfilePage
+            profileSnapshot={sharedProfile}
+            sharedMode
+          />
+        </div>
+      </div>
+    )
   }
 
   return (
