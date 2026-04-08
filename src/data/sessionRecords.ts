@@ -87,8 +87,11 @@ const buildRows = (records: SessionRecord[]): PlayerResultRow[] =>
     })),
   )
 
-// Days 15-19 include a few inferred values where the provided notes omitted a
-// buy-in or cashout amount. Those values preserve the stated profit when possible.
+// A few source rows omitted a buy-in/cashout value or had inconsistent arithmetic.
+// When a row includes only a single numeric value after the player name, that
+// value is treated as the already-calculated profit rather than a cashout total.
+// Stored values prioritize explicit paid/cashout amounts and keep the existing
+// inference pattern for incomplete rows.
 export const sessionRecords: SessionRecord[] = [
   {
     id: 'day-1',
@@ -283,7 +286,7 @@ export const sessionRecords: SessionRecord[] = [
     notes: '',
     players: [
       { name: 'Alex', paid: 18, chipValue: 7.55 },
-      { name: 'Mathias', paid: 6, chipValue: 10.65 },
+      { name: 'Mathias', paid: 6, chipValue: 16.65 },
       { name: 'Hugo', paid: 6, chipValue: 10.85 },
       { name: 'Alexis', paid: 6, chipValue: 7 },
       { name: 'Dani', paid: 6, chipValue: 6 },
@@ -335,6 +338,32 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Alexis', paid: 6, chipValue: 7.3 },
       { name: 'Alex', paid: 6, chipValue: 5 },
       { name: 'Mathias', paid: 6, chipValue: 6 },
+    ],
+  },
+  {
+    id: 'day-20',
+    label: 'Day 20',
+    date: '2026-05-16',
+    notes: '',
+    players: [
+      { name: 'Alex', paid: 28, chipValue: 11 },
+      { name: 'Alexis', paid: 10, chipValue: 31 },
+      { name: 'Dani', paid: 10, chipValue: 0 },
+      { name: 'Hugo', paid: 10, chipValue: 13.6 },
+      { name: 'Mathias', paid: 10, chipValue: 13.15 },
+    ],
+  },
+  {
+    id: 'day-21',
+    label: 'Day 21',
+    date: '2026-05-23',
+    notes: '',
+    players: [
+      { name: 'Mathias', paid: 6, chipValue: 14.55 },
+      { name: 'Alexis', paid: 6, chipValue: 10 },
+      { name: 'Alex', paid: 6, chipValue: 7.5 },
+      { name: 'Sandro', paid: 6, chipValue: 3.8 },
+      { name: 'Dani', paid: 12, chipValue: 0 },
     ],
   },
 ]
