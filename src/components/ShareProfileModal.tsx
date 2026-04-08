@@ -18,6 +18,10 @@ const ShareProfileModal = ({
     if (!isOpen || !snapshot || typeof window === 'undefined') return ''
     return buildSharedProfileUrl(snapshot)
   }, [isOpen, snapshot])
+  const shareMessage = useMemo(() => {
+    if (!shareUrl || !snapshot) return ''
+    return `Poker Tracker profile for ${snapshot.name}: ${shareUrl}`
+  }, [shareUrl, snapshot])
 
   useEffect(() => {
     if (!isOpen) {
@@ -38,21 +42,21 @@ const ShareProfileModal = ({
   if (!isOpen || !snapshot) return null
 
   const handleCopyLink = async () => {
-    if (!shareUrl) return
+    if (!shareMessage) return
 
     try {
-      await navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(shareMessage)
       setCopied(true)
     } catch {
-      window.prompt('Copy this profile link', shareUrl)
+      window.prompt('Copy this profile message', shareMessage)
     }
   }
 
   const handleWhatsappShare = () => {
-    if (!shareUrl) return
+    if (!shareMessage) return
 
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(shareUrl)}`,
+      `https://wa.me/?text=${encodeURIComponent(shareMessage)}`,
       '_blank',
       'noopener,noreferrer',
     )
