@@ -362,6 +362,19 @@ const App = () => {
                 This link opens only the shared player profile.
               </p>
             </div>
+            <a
+              href="/"
+              className="primary-button shared-profile-cta"
+              onClick={(event) => {
+                event.preventDefault()
+                window.history.pushState({}, '', '/')
+                setLocationState({ pathname: '/', search: '' })
+                setAppView('dashboard')
+                setActivePage('stats')
+              }}
+            >
+              Open full platform →
+            </a>
           </header>
 
           <PlayerProfilePage

@@ -999,6 +999,17 @@ select:focus {
 
 .shared-profile-header {
   padding: 38px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.shared-profile-cta {
+  text-decoration: none;
+  white-space: nowrap;
+  align-self: center;
 }
 
 .dashboard-toolbar,
