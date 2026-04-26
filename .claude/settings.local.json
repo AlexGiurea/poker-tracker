@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "mcp__Claude_Preview__preview_start",
-      "Bash(where npm:*)"
+      "Bash(where npm:*)",
+      "Bash(vercel ls *)",
+      "Bash(npx vercel *)",
+      "mcp__Claude_in_Chrome__list_connected_browsers"
     ]
   }
 }

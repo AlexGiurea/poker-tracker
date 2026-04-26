@@ -369,8 +369,8 @@ const App = () => {
                 event.preventDefault()
                 window.history.pushState({}, '', '/')
                 setLocationState({ pathname: '/', search: '' })
-                setAppView('dashboard')
-                setActivePage('stats')
+                setAppView('landing')
+                window.scrollTo({ top: 0, behavior: 'auto' })
               }}
             >
               Open full platform →

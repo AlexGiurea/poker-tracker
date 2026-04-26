@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "tsx scripts/generate-csv.mjs",
     "dev": "vite",
+    "prebuild": "tsx scripts/generate-csv.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -12,6 +14,7 @@
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
   },
