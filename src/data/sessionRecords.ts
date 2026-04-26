@@ -87,8 +87,11 @@ const buildRows = (records: SessionRecord[]): PlayerResultRow[] =>
     })),
   )
 
-// Days 15-19 include a few inferred values where the provided notes omitted a
-// buy-in or cashout amount. Those values preserve the stated profit when possible.
+// A few source rows omitted a buy-in/cashout value or had inconsistent arithmetic.
+// When a row includes only a single numeric value after the player name, that
+// value is treated as the already-calculated profit rather than a cashout total.
+// Stored values prioritize explicit paid/cashout amounts and keep the existing
+// inference pattern for incomplete rows.
 export const sessionRecords: SessionRecord[] = [
   {
     id: 'day-1',
@@ -283,7 +286,7 @@ export const sessionRecords: SessionRecord[] = [
     notes: '',
     players: [
       { name: 'Alex', paid: 18, chipValue: 7.55 },
-      { name: 'Mathias', paid: 6, chipValue: 10.65 },
+      { name: 'Mathias', paid: 6, chipValue: 16.65 },
       { name: 'Hugo', paid: 6, chipValue: 10.85 },
       { name: 'Alexis', paid: 6, chipValue: 7 },
       { name: 'Dani', paid: 6, chipValue: 6 },

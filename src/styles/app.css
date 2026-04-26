@@ -284,6 +284,7 @@ h3,
 .primary-button,
 .ghost-button,
 .page-tabs button,
+.dashboard-nav button,
 .session-tabs button,
 .stat-toggle button,
 .chatbot-input button,
@@ -307,12 +308,14 @@ h3,
 
 .ghost-button,
 .page-tabs button,
+.dashboard-nav button,
 .session-tabs button,
 .stat-toggle button,
 .chatbot-input button,
 .chatbot-toggle,
 .chatbot-history-new,
 .brand-button,
+.dashboard-back-button,
 .chatbot-action,
 .chatbot-close {
   background: rgba(6, 16, 25, 0.62);
@@ -326,12 +329,14 @@ h3,
 
 .ghost-button:hover,
 .page-tabs button:hover,
+.dashboard-nav button:hover,
 .session-tabs button:hover,
 .stat-toggle button:hover,
 .chatbot-input button:hover,
 .chatbot-toggle:hover,
 .chatbot-history-new:hover,
 .brand-button:hover,
+.dashboard-back-button:hover,
 .profile-link:hover {
   transform: translateY(-1px);
   border-color: rgba(78, 230, 255, 0.28);
@@ -350,8 +355,10 @@ h3,
 
 .landing-nav,
 .dashboard-header-top,
+.dashboard-toolbar,
 .landing-nav-actions,
 .page-tabs,
+.dashboard-nav,
 .dashboard-header-actions,
 .stat-bar-header,
 .column-header,
@@ -367,6 +374,7 @@ h3,
 }
 
 .landing-hero,
+.landing-simple-grid,
 .landing-showcase,
 .dashboard-hero,
 .dashboard-form-grid {
@@ -384,6 +392,14 @@ h3,
 .hero-stage,
 .showcase-panel:last-child,
 .dashboard-spotlight {
+  grid-column: span 5;
+}
+
+.landing-simple-grid .hero-copy {
+  grid-column: span 7;
+}
+
+.landing-simple-grid .showcase-panel {
   grid-column: span 5;
 }
 
@@ -419,8 +435,10 @@ h3,
 .hero-highlights,
 .hero-metrics,
 .landing-feature-grid,
+.landing-summary-grid,
 .leader-stack,
 .dashboard-summary-grid,
+.dashboard-summary-strip,
 .spotlight-list,
 .stats-grid,
 .stats-interactive,
@@ -525,8 +543,7 @@ h3,
 .summary-card strong {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2rem, 4vw, 3rem);
-  text-shadow: 0 0 20px rgba(78, 230, 255, 0.3);
-  animation: number-flare 7s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(78, 230, 255, 0.12);
 }
 
 .floating-pill {
@@ -659,8 +676,7 @@ h3,
   font-size: clamp(2.8rem, 4vw, 4.4rem);
   line-height: 0.9;
   letter-spacing: -0.05em;
-  text-shadow: 0 0 18px rgba(78, 230, 255, 0.25);
-  animation: number-flare 7s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(78, 230, 255, 0.12);
 }
 
 .summary-card-meta {
@@ -684,6 +700,7 @@ h3,
 }
 
 .page-tabs button.active,
+.dashboard-nav button.active,
 .session-tabs button.active,
 .stat-toggle button.active,
 .chatbot-history-item.active {
@@ -777,8 +794,7 @@ select:focus {
   font-size: 1.7rem;
   font-weight: 800;
   font-family: 'Space Grotesk', sans-serif;
-  text-shadow: 0 0 14px rgba(78, 230, 255, 0.22);
-  animation: number-flare 6s ease-in-out infinite;
+  text-shadow: 0 0 8px rgba(78, 230, 255, 0.1);
 }
 
 .stat-wheel {
@@ -893,6 +909,24 @@ select:focus {
   text-align: left;
 }
 
+.profile-actions {
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.profile-share-trigger,
+.profile-page-share-button,
+.share-modal-close {
+  padding: 0.64rem 1rem;
+}
+
+.profile-card-share,
+.profile-card-cta {
+  width: 100%;
+  justify-content: center;
+}
+
 .player-card-fields {
   display: grid;
   gap: 18px;
@@ -907,6 +941,11 @@ select:focus {
   display: grid;
   gap: 28px;
   text-align: left;
+}
+
+.profile-card-cta {
+  width: 100%;
+  justify-content: center;
 }
 
 .profile-header {
@@ -947,6 +986,138 @@ select:focus {
 .profile-page {
   display: grid;
   gap: 38px;
+}
+
+.shared-profile-app {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 38px;
+  width: min(1380px, 100%);
+  margin: 0 auto;
+}
+
+.shared-profile-header {
+  padding: 38px;
+}
+
+.dashboard-toolbar,
+.dashboard-header-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.dashboard-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  padding: 0.65rem 0.9rem;
+  background: rgba(6, 16, 25, 0.46);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-back-button span:first-child {
+  width: 1.65rem;
+  height: 1.65rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.dashboard-back-button span:last-child {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-nav {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.dashboard-nav button {
+  min-width: 8.5rem;
+}
+
+.dashboard-summary-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-summary-compact {
+  padding: 24px 26px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: rgba(7, 16, 24, 0.44);
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-summary-compact strong {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.5rem, 2.6vw, 2.4rem);
+  line-height: 1;
+  text-shadow: 0 0 6px rgba(78, 230, 255, 0.08);
+}
+
+.landing-summary-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quick-link-card,
+.landing-leaderboard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.quick-link-card {
+  width: 100%;
+  padding: 28px;
+  text-align: left;
+  background: rgba(7, 16, 24, 0.52);
+  display: grid;
+  gap: 12px;
+}
+
+.quick-link-card strong {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.35rem;
+}
+
+.landing-overview-list {
+  display: grid;
+  gap: 16px;
+}
+
+.landing-overview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(173, 227, 255, 0.1);
+}
+
+.landing-overview-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.landing-overview-row strong {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.landing-leaderboard {
+  padding: 32px;
+  display: grid;
+  gap: 22px;
 }
 
 .landing-cta {
@@ -990,6 +1161,162 @@ select:focus {
   font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 0.95;
+  text-shadow: 0 0 10px rgba(78, 230, 255, 0.1);
+}
+
+.profile-page-share-button {
+  margin-top: 8px;
+}
+
+.share-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 8, 15, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.share-modal {
+  width: min(560px, 100%);
+  padding: 30px;
+  display: grid;
+  gap: 22px;
+  overflow: visible;
+}
+
+.share-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.share-modal-close {
+  min-width: 7rem;
+  justify-content: center;
+}
+
+.share-modal-field {
+  gap: 12px;
+}
+
+.share-modal-field input {
+  font-size: 0.96rem;
+}
+
+.share-modal-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.profile-trend {
+  padding: 34px 38px;
+  display: grid;
+  gap: 26px;
+}
+
+.profile-trend-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.profile-trend-focus {
+  text-align: right;
+  display: grid;
+  gap: 6px;
+}
+
+.profile-trend-focus strong,
+.profile-trend-metric strong {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.6rem;
+  text-shadow: 0 0 6px rgba(78, 230, 255, 0.08);
+}
+
+.profile-trend-chart {
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  background: rgba(5, 13, 22, 0.62);
+  border: 1px solid rgba(78, 230, 255, 0.14);
+}
+
+.profile-trend-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.profile-trend-zero,
+.profile-trend-guide {
+  stroke: rgba(173, 227, 255, 0.14);
+  stroke-width: 2;
+}
+
+.profile-trend-guide {
+  stroke-dasharray: 6 8;
+}
+
+.profile-trend-line {
+  fill: none;
+  stroke: var(--accent-strong);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 12px rgba(78, 230, 255, 0.28));
+}
+
+.profile-trend-point {
+  fill: var(--bg);
+  stroke: rgba(120, 247, 212, 0.9);
+  stroke-width: 3;
+  cursor: pointer;
+  transition: transform 160ms ease, fill 160ms ease, stroke 160ms ease;
+}
+
+.profile-trend-point:hover,
+.profile-trend-point.active {
+  fill: var(--accent);
+  stroke: var(--text);
+}
+
+.profile-trend-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-trend-metric {
+  padding: 20px 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(78, 230, 255, 0.14);
+  background: rgba(7, 16, 24, 0.44);
+  display: grid;
+  gap: 8px;
+}
+
+.profile-trend-sessions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-trend-session {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(6, 16, 25, 0.62);
+  padding: 0.7rem 1rem;
+}
+
+.profile-trend-session.active {
+  background: linear-gradient(135deg, rgba(78, 230, 255, 0.2), rgba(120, 247, 212, 0.14));
+  border-color: rgba(78, 230, 255, 0.4);
+  color: var(--accent-strong);
 }
 
 .profile-session-row {
@@ -1190,8 +1517,8 @@ select:focus {
 }
 
 @keyframes number-flare {
-  0%, 100% { text-shadow: 0 0 16px rgba(78, 230, 255, 0.28); }
-  50%       { text-shadow: 0 0 24px rgba(78, 230, 255, 0.4), 0 0 50px rgba(78, 230, 255, 0.12); }
+  0%, 100% { text-shadow: 0 0 8px rgba(78, 230, 255, 0.12); }
+  50%       { text-shadow: 0 0 12px rgba(78, 230, 255, 0.18); }
 }
 
 @keyframes grid-scroll {
@@ -1293,11 +1620,11 @@ select:focus {
 
 /* Glowing positive/negative values */
 .positive {
-  text-shadow: 0 0 16px rgba(116, 240, 167, 0.5);
+  text-shadow: 0 0 8px rgba(116, 240, 167, 0.18);
 }
 
 .negative {
-  text-shadow: 0 0 16px rgba(255, 126, 145, 0.5);
+  text-shadow: 0 0 8px rgba(255, 126, 145, 0.18);
 }
 
 /* Brand mark glow */
@@ -1313,6 +1640,8 @@ select:focus {
 @media (max-width: 1100px) {
   .hero-copy,
   .hero-stage,
+  .landing-simple-grid .hero-copy,
+  .landing-simple-grid .showcase-panel,
   .showcase-panel:first-child,
   .showcase-panel:last-child,
   .dashboard-copy,
@@ -1324,7 +1653,10 @@ select:focus {
   }
 
   .landing-feature-grid,
-  .dashboard-summary-grid {
+  .dashboard-summary-grid,
+  .landing-summary-grid,
+  .dashboard-summary-strip,
+  .profile-trend-metrics {
     grid-template-columns: 1fr;
   }
 
@@ -1342,6 +1674,7 @@ select:focus {
   .landing-nav-actions,
   .hero-actions,
   .page-tabs,
+  .dashboard-nav,
   .session-tabs,
   .dashboard-header-actions {
     width: 100%;
@@ -1351,7 +1684,8 @@ select:focus {
   .hero-actions .ghost-button,
   .landing-nav-actions .primary-button,
   .landing-nav-actions .ghost-button,
-  .dashboard-header-actions .ghost-button {
+  .dashboard-nav button,
+  .dashboard-back-button {
     flex: 1 1 12rem;
     justify-content: center;
   }
@@ -1377,6 +1711,7 @@ select:focus {
   .dashboard-header,
   .hero-copy,
   .showcase-panel,
+  .landing-leaderboard,
   .landing-cta,
   .dashboard-spotlight,
   .form-panel,
@@ -1407,9 +1742,15 @@ select:focus {
 
   .player-card-header,
   .profile-session-row,
-  .profile-hero {
+  .profile-hero,
+  .profile-trend-header,
+  .share-modal-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .profile-trend-focus {
+    text-align: left;
   }
 
   .chatbot-widget {
@@ -1429,6 +1770,21 @@ select:focus {
     width: calc(100vw - 24px);
     max-width: none;
     border-radius: 20px;
+  }
+
+  .share-modal {
+    padding: 24px;
+  }
+
+  .share-modal-actions {
+    width: 100%;
+  }
+
+  .share-modal-actions .primary-button,
+  .share-modal-actions .ghost-button,
+  .share-modal-close {
+    width: 100%;
+    justify-content: center;
   }
 
   .chatbot-message {
