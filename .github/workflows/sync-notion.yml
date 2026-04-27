@@ -1,0 +1,59 @@
+name: Sync Notion → sessionRecords
+
+on:
+  # 04:00 UTC daily = 11:00 PM CDT (Tennessee in DST), 10:00 PM CST (winter).
+  # GitHub Actions cron does not observe DST.
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Parse and log diff without committing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run sync
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PAGE_ID: ${{ secrets.NOTION_PAGE_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: npx tsx scripts/sync-notion.mjs
+
+      - name: Regenerate chatbot CSV
+        if: ${{ inputs.dry_run != true }}
+        run: npx tsx scripts/generate-csv.mjs
+
+      - name: Commit & push if changed
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          if git diff --quiet src/data/sessionRecords.ts public/data/players-results.csv; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/sessionRecords.ts public/data/players-results.csv
+          git commit -m "chore(sync): import new session(s) from Notion"
+          git push

@@ -8,12 +8,15 @@
     "dev": "vite",
     "prebuild": "tsx scripts/generate-csv.mjs",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync-notion": "tsx scripts/sync-notion.mjs"
   },
   "devDependencies": {
+    "@notionhq/client": "^5.20.0",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "openai": "^6.34.0",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
