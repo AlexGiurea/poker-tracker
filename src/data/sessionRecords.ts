@@ -128,7 +128,7 @@ export const sessionRecords: SessionRecord[] = [
     notes: 'High chip counts and a big winner.',
     players: [
       { name: 'Alex', paid: 6, chipValue: 9.3 },
-      { name: 'Dani', paid: 6, chipValue: 23 },
+      { name: 'Danny', paid: 6, chipValue: 23 },
       { name: 'Mathias', paid: 12, chipValue: 0 },
       { name: 'Joel', paid: 6, chipValue: 2 },
       { name: 'Hugo', paid: 12, chipValue: 7.6 },
@@ -154,7 +154,7 @@ export const sessionRecords: SessionRecord[] = [
     date: '2026-01-31',
     notes: 'Short-handed finale with sharp swings.',
     players: [
-      { name: 'Sandro', paid: 6, chipValue: -12 },
+      { name: 'Sandro', paid: 18, chipValue: 0 },
       { name: 'Alex', paid: 6, chipValue: 21.5 },
       { name: 'Hugo', paid: 6, chipValue: 14.2 },
       { name: 'Mathias', paid: 6, chipValue: 0 },
@@ -168,7 +168,7 @@ export const sessionRecords: SessionRecord[] = [
     players: [
       { name: 'Alex', paid: 9, chipValue: 9.9 },
       { name: 'Hugo', paid: 6, chipValue: 10.25 },
-      { name: 'Dani', paid: 6, chipValue: 6 },
+      { name: 'Danny', paid: 6, chipValue: 6 },
       { name: 'Mathias', paid: 12, chipValue: 9.15 },
       { name: 'Pato', paid: 6, chipValue: 3.95 },
     ],
@@ -194,7 +194,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Alex', paid: 6, chipValue: 3.2 },
       { name: 'Hugo', paid: 6, chipValue: 5.7 },
       { name: 'Mathias', paid: 6, chipValue: 16.45 },
-      { name: 'Dani', paid: 12, chipValue: 16.6 },
+      { name: 'Danny', paid: 12, chipValue: 16.6 },
     ],
   },
   {
@@ -205,7 +205,7 @@ export const sessionRecords: SessionRecord[] = [
     players: [
       { name: 'Joel', paid: 12, chipValue: 3.5 },
       { name: 'Alex', paid: 12, chipValue: 16 },
-      { name: 'Dani', paid: 6, chipValue: 18.5 },
+      { name: 'Danny', paid: 6, chipValue: 18.5 },
       { name: 'Mathias', paid: 6, chipValue: 15 },
       { name: 'Hugo', paid: 6, chipValue: 4.1 },
       { name: 'Luis', paid: 15, chipValue: 0 },
@@ -221,7 +221,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Sandro', paid: 14, chipValue: 14 },
       { name: 'Mathias', paid: 6, chipValue: 15.75 },
       { name: 'Hugo', paid: 6, chipValue: 8.5 },
-      { name: 'Dani', paid: 6, chipValue: 39 },
+      { name: 'Danny', paid: 6, chipValue: 39 },
       { name: 'Alexis', paid: 17, chipValue: 0 },
       { name: 'Alex', paid: 18, chipValue: 20.7 },
       { name: 'Ethan', paid: 12, chipValue: 11.3 },
@@ -239,7 +239,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Hugo', paid: 6, chipValue: 9.55 },
       { name: 'Mathias', paid: 9.45, chipValue: 0 },
       { name: 'Sandro', paid: 12, chipValue: 0 },
-      { name: 'Dani', paid: 12, chipValue: 0 },
+      { name: 'Danny', paid: 12, chipValue: 0 },
     ],
   },
   {
@@ -273,7 +273,7 @@ export const sessionRecords: SessionRecord[] = [
     notes: '',
     players: [
       { name: 'Alexis', paid: 6, chipValue: 10.65 },
-      { name: 'Dani', paid: 6, chipValue: 18 },
+      { name: 'Danny', paid: 6, chipValue: 18 },
       { name: 'Hugo', paid: 6, chipValue: 3 },
       { name: 'Mathias', paid: 12, chipValue: 1.45 },
       { name: 'Alex', paid: 15, chipValue: 14.15 },
@@ -286,10 +286,10 @@ export const sessionRecords: SessionRecord[] = [
     notes: '',
     players: [
       { name: 'Alex', paid: 18, chipValue: 7.55 },
-      { name: 'Mathias', paid: 6, chipValue: 16.65 },
+      { name: 'Mathias', paid: 6, chipValue: 10.65 },
       { name: 'Hugo', paid: 6, chipValue: 10.85 },
       { name: 'Alexis', paid: 6, chipValue: 7 },
-      { name: 'Dani', paid: 6, chipValue: 6 },
+      { name: 'Danny', paid: 6, chipValue: 6 },
     ],
   },
   {
@@ -302,7 +302,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Hugo', paid: 6, chipValue: 7 },
       { name: 'Alexis', paid: 6, chipValue: 2.65 },
       { name: 'Alex', paid: 7, chipValue: 5.5 },
-      { name: 'Dani', paid: 6, chipValue: 8 },
+      { name: 'Danny', paid: 6, chipValue: 8 },
     ],
   },
   {
@@ -348,7 +348,7 @@ export const sessionRecords: SessionRecord[] = [
     players: [
       { name: 'Alex', paid: 28, chipValue: 11 },
       { name: 'Alexis', paid: 10, chipValue: 31 },
-      { name: 'Dani', paid: 10, chipValue: 0 },
+      { name: 'Danny', paid: 10, chipValue: 0 },
       { name: 'Hugo', paid: 10, chipValue: 13.6 },
       { name: 'Mathias', paid: 10, chipValue: 13.15 },
     ],
@@ -363,7 +363,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Alexis', paid: 6, chipValue: 10 },
       { name: 'Alex', paid: 6, chipValue: 7.5 },
       { name: 'Sandro', paid: 6, chipValue: 3.8 },
-      { name: 'Dani', paid: 6, chipValue: -6 },
+      { name: 'Danny', paid: 12, chipValue: 0 },
     ],
   },
   {
@@ -411,7 +411,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Mathias', paid: 6, chipValue: 4 },
       { name: 'Alex', paid: 10, chipValue: 6.4 },
       { name: 'Alexis', paid: 6, chipValue: 23.55 },
-      { name: 'Dani', paid: 6, chipValue: 9 },
+      { name: 'Danny', paid: 6, chipValue: 9 },
     ],
   },
   {
@@ -425,7 +425,7 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Hugo', paid: 6, chipValue: 7.2 },
       { name: 'Alex', paid: 18, chipValue: 0 },
       { name: 'Mathias', paid: 6, chipValue: 13.4 },
-      { name: 'Dani', paid: 6, chipValue: 0 },
+      { name: 'Danny', paid: 6, chipValue: 0 },
     ],
   },
   {
@@ -439,8 +439,36 @@ export const sessionRecords: SessionRecord[] = [
       { name: 'Mathias', paid: 6, chipValue: 10.4 },
       { name: 'Alexis', paid: 6, chipValue: 6.2 },
       { name: 'Hugo', paid: 6, chipValue: 0.6 },
-      { name: 'Ethan', paid: 6, chipValue: -8.25 },
+      { name: 'Ethan', paid: 14.25, chipValue: 0 },
       { name: 'Jakub', paid: 6, chipValue: 15.25 },
+    ],
+  },
+  {
+    id: 'day-28',
+    label: 'Day 28',
+    date: '2026-07-11',
+    notes: '',
+    players: [
+      { name: 'Alex', paid: 16, chipValue: 9 },
+      { name: 'Hugo', paid: 6, chipValue: 6 },
+      { name: 'Mathias', paid: 6, chipValue: 3.5 },
+      { name: 'Sandro', paid: 6, chipValue: 10.6 },
+    ],
+  },
+  {
+    id: 'day-29',
+    label: 'Day 29',
+    date: '2026-07-18',
+    notes: '',
+    players: [
+      { name: 'Alex', paid: 18, chipValue: 26 },
+      { name: 'Ethan', paid: 6, chipValue: 0 },
+      { name: 'Hugo', paid: 6, chipValue: 6 },
+      { name: 'Sandro', paid: 12, chipValue: 8.5 },
+      { name: 'Danny', paid: 6, chipValue: 29 },
+      { name: 'Luis', paid: 6, chipValue: 3 },
+      { name: 'Joel', paid: 6, chipValue: 6 },
+      { name: 'Mathias', paid: 12, chipValue: 0 },
     ],
   },
 ]
